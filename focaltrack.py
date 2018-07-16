@@ -334,11 +334,11 @@ class Camera(threading.Thread):
 		# Retrieve TL device nodemap and camera nodemap
 
 		nodemap = self.GetNodeMap()
-        nodemap_tldevice = self.GetTLDeviceNodeMap()
+		nodemap_tldevice = self.GetTLDeviceNodeMap()
 
-        # Print device information.
-        node_device_information = ps.CCategoryPtr(nodemap_tldevice.GetNode('DeviceInformation'))
-        if ps.IsAvailable(node_device_information) and ps.IsReadable(node_device_information):
+		# Print device information.
+		node_device_information = ps.CCategoryPtr(nodemap_tldevice.GetNode('DeviceInformation'))
+		if ps.IsAvailable(node_device_information) and ps.IsReadable(node_device_information):
 			features = node_device_information.GetFeatures()
 			for feature in features:
 				node_feature = ps.CValuePtr(feature)
