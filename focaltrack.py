@@ -292,6 +292,7 @@ class Camera(threading.Thread):
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("camera capture frame rate: (gross speed)", perf, " fps")
+	
 		
 	def initialize_camera_ptg(self):
 		#access the point grey camera using flycap
@@ -323,6 +324,60 @@ class Camera(threading.Thread):
 			img.shape[0],img.shape[1]
 		)
 		self.cfg['camera_fps'] = p['abs_value']
+	
+
+	def initialize_camera_spinnaker(self):
+		# TODO: May need to add part of the main function from acquisition.py
+		# See initialize_camera_ptg as an example.
+
+		# Retrieve TL device nodemap and camera nodemap
+
+		nodemap = self.GetNodeMap()
+        nodemap_tldevice = self.GetTLDeviceNodeMap()
+
+        # Print device information.
+        node_device_information = ps.CCategoryPtr(nodemap_tldevice.GetNode('DeviceInformation'))
+        if ps.IsAvailable(node_device_information) and ps.IsReadable(node_device_information):
+			features = node_device_information.GetFeatures()
+			for feature in features:
+				node_feature = ps.CValuePtr(feature)
+				print('%s: %s' % (node_feature.GetName(),
+                                  node_feature.ToString() if ps.IsReadable(node_feature) else 'Node not readable'))
+
+		else:
+			print('Device control information not available.')	
+
+		# Set the acquisition mode the continous.
+		# Node entries have to be casted to a pointer type.
+		node_acquisition_mode = ps.CEnumerationPtr(nodemap.GetNode('AcquisitionMode'))
+		if not ps.IsAvailable(node_acquisition_mode) or not ps.IsWritable(node_acquisition_mode):
+			print('node_acquisition_mode is not available or not writable')
+			print('Unable to set acquisition mode to continuous. Aborting...')
+			# TODO code to terminate the program.
+
+		# Retrieve entry mode from enumeration node.
+		node_acquisition_mode_continuous = node_acquisition_mode.GetEntryByName('Continuous')
+		if not ps.IsAvailable(node_acquisition_mode_continuous) or not ps.IsReadable(node_acquisition_mode_continuous):
+			if not ps.IsAvailable(node_acquisition_mode_continuous):
+				print('node_acquisition_mode_continuous is not available.')
+			
+			if not ps.IsReadable(node_acquisition_mode_continuous):
+				print('node_acquisition_mode_continuous is not readable.')
+
+			print('')
+			print('Unable to set acquisition mode to continuous. Aborting...')
+
+		# Retrieve integer value from entry node
+		acquisition_mode_continuous = node_acquisition_mode_continuous.GetValue()
+
+		# Set integer value from entry node as new value of enumeration node
+		node_acquisition_mode.SetIntValue(acquisition_mode_continuous)
+
+		print('Acquisition mode set to continuous...')
+
+		# Begin acquisiting images.
+		self.BeginAcquisition()
+
 
 	def decide_idx(self, new_image):
 		global I_idx
@@ -403,6 +458,15 @@ class Camera(threading.Thread):
 		img = np.array(self.im)
 		img = scipy.misc.imresize(img, 1/self.cfg['downscale'])
 		return self.process(img)
+
+	def grab_frame_and_process_spinnaker(self):
+
+		# Grab the next image and convert it to a numpy array.
+		image_result = self.GetNextImage()
+		image_data = image_result.getNDArray()
+
+		# Present the image
+		return self.process(image_data)
 			
 	"""computes the average FPS over the last __FPS_WINDOW frames"""
 	def get_fps(self):
