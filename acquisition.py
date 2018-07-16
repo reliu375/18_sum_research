@@ -4,7 +4,7 @@ import os # For deleting images that are saved.
 import pdb
 import time
  
-NUM_IMAGES = 100
+# NUM_IMAGES = 100
 """
 class TriggerType:
 	SOFTWARE = 1
@@ -272,11 +272,13 @@ def acquire_images(cam, nodemap, nodemap_tldevice):
 				counter += 1
 
 				if key == ord('q') or key == ord('Q'):
-					cv.destroyAllWindows()
-					print(str(counter) + '\n')
 					end_time = time.time()
-					efficiency = counter/(end_time - begin_time)
-					print(str(efficiency))
+					time_difference = end_time - begin_time
+					cv.destroyAllWindows()
+					print(str(counter) + ' images are displayed.\n')
+					print('The time of which the program ran is ' + str(time_difference) + ' seconds.\n')
+					efficiency = counter/time_difference
+					print(str(efficiency) + 'images are taken per second. ')
 					break;				
 
 				'''				
