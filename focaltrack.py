@@ -2509,7 +2509,7 @@ def multithreading_test():
 
 	# c.start()
 	a.start()
-
+	'''
 	time.sleep(1)
 
 	# initialize the pulsecam processor
@@ -2548,7 +2548,7 @@ def multithreading_test():
 
 	b.join()
 	d.join()
-
+	'''
 if __name__ == "__main__":
 	# debug_test()
 	multithreading_test()
