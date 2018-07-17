@@ -395,6 +395,15 @@ class Camera(threading.Thread):
 		# Begin acquisiting images.
 		self.cam.BeginAcquisition()
 
+		image = self.cam.GetNextImage()
+		image_data = image.getNDArray()
+
+		image_data = scipy.misc.imresize(image_data, 1/self.cfg['downscale'])
+		self.resolution = (
+			image_data.shape[0],image_data.shape[1]
+		)
+		self.cfg['camera_fps'] = p['abs_value']
+
 	def decide_idx(self, new_image):
 		global I_idx
 		# try to find out which image should be replaced
