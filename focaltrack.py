@@ -396,6 +396,7 @@ class Camera(threading.Thread):
 		self.cam.BeginAcquisition()
 
 		image = self.cam.GetNextImage()
+		pdb.set_trace()
 		image_data = image.getNDArray()
 
 		image_data = scipy.misc.imresize(image_data, 1/self.cfg['downscale'])
