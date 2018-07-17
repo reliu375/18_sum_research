@@ -2,7 +2,7 @@ import serial
 import argparse
 
 import cv2
-import flycapture2 as fc2
+# import flycapture2 as fc2
 import tensorflow as tf
 import numpy as np
 import scipy.misc
