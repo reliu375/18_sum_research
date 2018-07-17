@@ -1872,6 +1872,7 @@ class Display(threading.Thread):
 	def bilateral(self, I, Z, conf):
 		return cv2.bilateralFilter(Z,5,0.3,3)
 
+	'''
 	import cv2.ximgproc
 	def guided(self, I, Z, conf):
 		return cv2.ximgproc.guidedFilter(I, Z, 9, 0.3)
@@ -1884,7 +1885,8 @@ class Display(threading.Thread):
 			5,\
 			7,
 		)
-
+	'''
+	
 	import scipy.signal
 	def iccv_output(self):	
 		# backup the data for saving
