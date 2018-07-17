@@ -243,7 +243,8 @@ class Camera(threading.Thread):
 		
 		#initialize camera
 		self.cam = None
-		self.initialize_camera_ptg()
+		# self.initialize_camera_ptg()
+		self.initialize_camera_spinnaker()
 
 		#initialize cache
 		for k in ['gray']:
@@ -271,8 +272,9 @@ class Camera(threading.Thread):
 			else:
 				self.t0 = time.time()
 
-			self.grab_frame_and_process_ptg()
+			# self.grab_frame_and_process_ptg()
 			# self.regular_output()
+			self.grab_frame_and_process_spinnaker()
 
 			# obtain the input
 			displayThread.acquire()
@@ -324,15 +326,17 @@ class Camera(threading.Thread):
 		self.resolution = (
 			img.shape[0],img.shape[1]
 		)
-		self.cfg['camera_fps'] = p['abs_value']
-	
+		self.cfg['camera_fps'] = p['abs_value']	
 
 	def initialize_camera_spinnaker(self):
-		# TODO: May need to add part of the main function from acquisition.py
-		# See initialize_camera_ptg as an example.
+		# Get singleton reference to system object
+		system = ps.System.GetInstance()
+
+		#Get current library version
+		version = system.GetLibraryVersion()
+		print('Library version: %d.%d.%d.%d' % (version.major, version.minor, version.type, version.build))
 
 		# Retrieve TL device nodemap and camera nodemap
-
 		nodemap = self.GetNodeMap()
 		nodemap_tldevice = self.GetTLDeviceNodeMap()
 
@@ -378,7 +382,6 @@ class Camera(threading.Thread):
 
 		# Begin acquisiting images.
 		self.BeginAcquisition()
-
 
 	def decide_idx(self, new_image):
 		global I_idx
