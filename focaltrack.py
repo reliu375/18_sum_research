@@ -220,7 +220,11 @@ class Camera(threading.Thread):
 	"""A class for the camera"""
 	def __init__(self):
 		threading.Thread.__init__(self)
+		pdb.set_trace()
 		system = ps.System.GetInstance()
+		pdb.set_trace()
+		cam_list = system.GetCameras()
+
 		#default configuraiton
 		self.cfg = {
 			#processing configuration knobs
@@ -242,11 +246,14 @@ class Camera(threading.Thread):
 		self.vars = {}
 		self.frames = 0
 		self.resolution = None
-		self.system = ps.System.GetInstance()
 		
+		# self.system = ps.System.GetInstance()
+		
+		pdb.set_trace()
 		#initialize camera
-		self.cam = system.GetCameras()[0]
+		self.cam = cam_list[0]
 		# self.initialize_camera_ptg()
+		pdb.set_trace()
 		self.initialize_camera_spinnaker()
 
 		#initialize cache
@@ -341,9 +348,12 @@ class Camera(threading.Thread):
 		
 		# Retrieve TL device nodemap and camera nodemap
 		self.cam.Init()
+		pdb.set_trace()
 		nodemap = self.cam.GetNodeMap()
+		pdb.set_trace()
 		nodemap_tldevice = self.cam.GetTLDeviceNodeMap()
-
+		pdb.set_trace()
+		
 		# Print device information.
 		node_device_information = ps.CCategoryPtr(nodemap_tldevice.GetNode('DeviceInformation'))
 		if ps.IsAvailable(node_device_information) and ps.IsReadable(node_device_information):
@@ -519,6 +529,11 @@ class Camera(threading.Thread):
 		print('Acquisition process terminated.')
 		self.cam.deInit()
 		print('Camera deinitialized.')
+		cam_lisst.Clear()			
+		print('Camera list cleared.')
+		system.ReleaseInstance()
+		print('System is released.')
+
 			
 	"""destructor: free up resources when done"""
 	def __del__(self):
