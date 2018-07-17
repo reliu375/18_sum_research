@@ -13,6 +13,7 @@ import os, glob
 import math
 import copy
 import PySpin as ps
+import pdb
 
 from utils import *
 import time
@@ -336,6 +337,8 @@ class Camera(threading.Thread):
 		version = self.system.GetLibraryVersion()
 		print('Library version: %d.%d.%d.%d' % (version.major, version.minor, version.type, version.build))
 
+		pdb.set_trace()
+		
 		# Retrieve TL device nodemap and camera nodemap
 		self.cam.Init()
 		nodemap = self.cam.GetNodeMap()
