@@ -241,6 +241,7 @@ class Camera(threading.Thread):
 		self.vars = {}
 		self.frames = 0
 		self.resolution = None
+		self.system = ps.System.GetInstance()
 		
 		#initialize camera
 		self.cam = system.GetCameras()[0]
@@ -330,14 +331,13 @@ class Camera(threading.Thread):
 		self.cfg['camera_fps'] = p['abs_value']	
 
 	def initialize_camera_spinnaker(self):
-		# Get singleton reference to system object
-		system = ps.System.GetInstance()
-
+	
 		#Get current library version
-		version = system.GetLibraryVersion()
+		version = self.system.GetLibraryVersion()
 		print('Library version: %d.%d.%d.%d' % (version.major, version.minor, version.type, version.build))
 
 		# Retrieve TL device nodemap and camera nodemap
+		self.cam.Init()
 		nodemap = self.cam.GetNodeMap()
 		nodemap_tldevice = self.cam.GetTLDeviceNodeMap()
 
@@ -509,6 +509,13 @@ class Camera(threading.Thread):
 									title = "Camera Thread", \
 								)
 		cv2.imshow("Camera Thread", self.cache['draw'])
+
+	def clean_up(self):
+		# TODO: to deinitialize the camera to protect the camera.
+		self.cam.EndAcquisition()
+		print('Acquisition process terminated.')
+		self.cam.deInit()
+		print('Camera deinitialized.')
 			
 	"""destructor: free up resources when done"""
 	def __del__(self):
@@ -2512,6 +2519,7 @@ def multithreading_test():
 
 	# c.start()
 	a.start()
+	a.clean_up()
 	'''
 	time.sleep(1)
 
