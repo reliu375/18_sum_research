@@ -219,6 +219,7 @@ class Camera(threading.Thread):
 	"""A class for the camera"""
 	def __init__(self):
 		threading.Thread.__init__(self)
+		system = ps.System.GetInstance()
 		#default configuraiton
 		self.cfg = {
 			#processing configuration knobs
@@ -242,7 +243,7 @@ class Camera(threading.Thread):
 		self.resolution = None
 		
 		#initialize camera
-		self.cam = None
+		self.cam = system.GetCameras()[0]
 		# self.initialize_camera_ptg()
 		self.initialize_camera_spinnaker()
 
@@ -337,8 +338,8 @@ class Camera(threading.Thread):
 		print('Library version: %d.%d.%d.%d' % (version.major, version.minor, version.type, version.build))
 
 		# Retrieve TL device nodemap and camera nodemap
-		nodemap = self.GetNodeMap()
-		nodemap_tldevice = self.GetTLDeviceNodeMap()
+		nodemap = self.cam.GetNodeMap()
+		nodemap_tldevice = self.cam.GetTLDeviceNodeMap()
 
 		# Print device information.
 		node_device_information = ps.CCategoryPtr(nodemap_tldevice.GetNode('DeviceInformation'))
@@ -381,7 +382,7 @@ class Camera(threading.Thread):
 		print('Acquisition mode set to continuous...')
 
 		# Begin acquisiting images.
-		self.BeginAcquisition()
+		self.cam.BeginAcquisition()
 
 	def decide_idx(self, new_image):
 		global I_idx
@@ -466,7 +467,7 @@ class Camera(threading.Thread):
 	def grab_frame_and_process_spinnaker(self):
 
 		# Grab the next image and convert it to a numpy array.
-		image_result = self.GetNextImage()
+		image_result = self.cam.GetNextImage()
 		image_data = image_result.getNDArray()
 
 		# Present the image
@@ -1886,7 +1887,7 @@ class Display(threading.Thread):
 			7,
 		)
 	'''
-	
+
 	import scipy.signal
 	def iccv_output(self):	
 		# backup the data for saving
