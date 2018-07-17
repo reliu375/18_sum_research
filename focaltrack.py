@@ -220,10 +220,6 @@ class Camera(threading.Thread):
 	"""A class for the camera"""
 	def __init__(self):
 		threading.Thread.__init__(self)
-		pdb.set_trace()
-		system = ps.System.GetInstance()
-		pdb.set_trace()
-		cam_list = system.GetCameras()
 
 		#default configuraiton
 		self.cfg = {
@@ -246,8 +242,10 @@ class Camera(threading.Thread):
 		self.vars = {}
 		self.frames = 0
 		self.resolution = None
-		
-		# self.system = ps.System.GetInstance()
+		pdb.set_trace()
+		self.system = ps.System.GetInstance()
+		pdb.set_trace()
+		cam_list = self.system.GetCameras()
 		
 		pdb.set_trace()
 		#initialize camera
@@ -529,9 +527,9 @@ class Camera(threading.Thread):
 		print('Acquisition process terminated.')
 		self.cam.deInit()
 		print('Camera deinitialized.')
-		cam_lisst.Clear()			
+		cam_list.Clear()			
 		print('Camera list cleared.')
-		system.ReleaseInstance()
+		self.system.ReleaseInstance()
 		print('System is released.')
 
 			
