@@ -18,6 +18,7 @@ import pdb
 from utils import *
 import time
 from scipy import interpolate
+import numpy.matlib
 
 #notes
 #  -did I mix up x and y again?  always worth checking
@@ -249,7 +250,7 @@ class Camera(threading.Thread):
 		#initialize camera
 		self.cam = self.cam_list[0]
 		# self.initialize_camera_ptg()
-		pdb.set_trace()
+		# pdb.set_trace()
 		self.initialize_camera_spinnaker()
 
 		#initialize cache
@@ -284,7 +285,7 @@ class Camera(threading.Thread):
 			# self.regular_output()
 			self.grab_frame_and_process_spinnaker()
 
-			pdb.set_trace()			
+			# pdb.set_trace()			
 
 			# obtain the input
 			displayThread.acquire()
@@ -1149,6 +1150,8 @@ class PulseCamProcessorTF(threading.Thread):
 
 		self.swap_frames()
 
+		# pdb.set_trace()
+
 		results = self.results
 
 		return
@@ -1643,7 +1646,7 @@ class Display(threading.Thread):
 		while True:
 			self.t0 = time.time()
 			self.process()
-			self.iccv_output()
+			self.icciv_output()
 
 			# obtain the input
 			displayThread.acquire()
@@ -1936,7 +1939,7 @@ class Display(threading.Thread):
 	import scipy.signal
 	def iccv_output(self):	
 		# backup the data for saving
-		pdb.set_trace()
+		# pdb.set_trace()
 		self.depth_data['Zf'] = copy.deepcopy(self.results['Zf'])
 		self.depth_data['conff'] = copy.deepcopy(self.results['conf'])
 
@@ -2588,7 +2591,7 @@ def multithreading_test():
 	b = PulseCamProcessorTF(cfg[0:-1], cfgf)
 	b.start()
 
-	time.sleep(1)
+	time.sleep(5)
 	d = Display(cfg[0:-1], cfgf)	
 	d.start()
 	
@@ -2596,6 +2599,7 @@ def multithreading_test():
 	a.join()
 
 	b.join()
+	time.sleep(5)
 	d.join()
 
 	a.clean_up()
