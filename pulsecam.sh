@@ -7,4 +7,4 @@ sudo chmod 777 /dev/ttyUSB0
 python3.5 test_usb.py
 
 # run the program
-python3.5 focaltrack.py
+# python3.5 focaltrack.py

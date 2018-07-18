@@ -219,6 +219,7 @@ class OutsideCamera(threading.Thread):
 class Camera(threading.Thread):
 	"""A class for the camera"""
 	def __init__(self):
+		print('Does this program even run yikes')
 		threading.Thread.__init__(self)
 
 		#default configuraiton
@@ -248,6 +249,7 @@ class Camera(threading.Thread):
 		#initialize camera
 		self.cam = self.cam_list[0]
 		# self.initialize_camera_ptg()
+		pdb.set_trace()
 		self.initialize_camera_spinnaker()
 
 		#initialize cache
@@ -264,6 +266,8 @@ class Camera(threading.Thread):
 		self.I_cache = np.zeros(self.resolution+(2,), dtype = np.uint8)
 		self.time_lapse = 0
 
+		print('The initialization process is complete.')
+
 	def run(self):
 		global ending_key
 		# The code to capture images
@@ -279,6 +283,8 @@ class Camera(threading.Thread):
 			# self.grab_frame_and_process_ptg()
 			# self.regular_output()
 			self.grab_frame_and_process_spinnaker()
+
+			pdb.set_trace()			
 
 			# obtain the input
 			displayThread.acquire()
@@ -386,17 +392,25 @@ class Camera(threading.Thread):
 
 		# Begin acquisiting images.
 		self.cam.BeginAcquisition()
+
+		print('Begin getting images')
 		
 		self.im = self.cam.GetNextImage()
+		pdb.set_trace()
 		image_data = self.im.GetNDArray()
+		pdb.set_trace()
 		self.im.Release()
 		# image_data = image.getNDArray()
+
+		pdb.set_trace()
 
 		image_data = scipy.misc.imresize(image_data, 1/self.cfg['downscale'])
 		self.resolution = (
 			image_data.shape[0],image_data.shape[1]
 		)
 		# self.cfg['camera_fps'] = p['abs_value']
+
+		print('The camera is set up successfully')
 
 	def decide_idx(self, new_image):
 		global I_idx
