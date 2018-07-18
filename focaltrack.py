@@ -242,16 +242,12 @@ class Camera(threading.Thread):
 		self.vars = {}
 		self.frames = 0
 		self.resolution = None
-		pdb.set_trace()
 		self.system = ps.System.GetInstance()
-		pdb.set_trace()
-		cam_list = self.system.GetCameras()
+		self.cam_list = self.system.GetCameras()
 		
-		pdb.set_trace()
 		#initialize camera
-		self.cam = cam_list[0]
+		self.cam = self.cam_list[0]
 		# self.initialize_camera_ptg()
-		pdb.set_trace()
 		self.initialize_camera_spinnaker()
 
 		#initialize cache
@@ -342,15 +338,11 @@ class Camera(threading.Thread):
 		version = self.system.GetLibraryVersion()
 		print('Library version: %d.%d.%d.%d' % (version.major, version.minor, version.type, version.build))
 
-		pdb.set_trace()
 		
 		# Retrieve TL device nodemap and camera nodemap
 		self.cam.Init()
-		pdb.set_trace()
 		nodemap = self.cam.GetNodeMap()
-		pdb.set_trace()
 		nodemap_tldevice = self.cam.GetTLDeviceNodeMap()
-		pdb.set_trace()
 		
 		# Print device information.
 		node_device_information = ps.CCategoryPtr(nodemap_tldevice.GetNode('DeviceInformation'))
@@ -394,16 +386,17 @@ class Camera(threading.Thread):
 
 		# Begin acquisiting images.
 		self.cam.BeginAcquisition()
-
-		image = self.cam.GetNextImage()
-		pdb.set_trace()
-		image_data = image.getNDArray()
+		
+		self.im = self.cam.GetNextImage()
+		image_data = self.im.GetNDArray()
+		self.im.Release()
+		# image_data = image.getNDArray()
 
 		image_data = scipy.misc.imresize(image_data, 1/self.cfg['downscale'])
 		self.resolution = (
 			image_data.shape[0],image_data.shape[1]
 		)
-		self.cfg['camera_fps'] = p['abs_value']
+		# self.cfg['camera_fps'] = p['abs_value']
 
 	def decide_idx(self, new_image):
 		global I_idx
@@ -489,7 +482,12 @@ class Camera(threading.Thread):
 
 		# Grab the next image and convert it to a numpy array.
 		image_result = self.cam.GetNextImage()
-		image_data = image_result.getNDArray()
+		image_data = image_result.GetNDArray()
+
+		image_data = scipy.misc.imresize(image_data, 1/self.cfg['downscale'])
+
+		# Release the image to yield space in the buffer
+		image_result.Release()
 
 		# Present the image
 		return self.process(image_data)
@@ -535,12 +533,12 @@ class Camera(threading.Thread):
 		# TODO: to deinitialize the camera to protect the camera.
 		self.cam.EndAcquisition()
 		print('Acquisition process terminated.')
-		self.cam.deInit()
+		self.cam.DeInit()
 		print('Camera deinitialized.')
-		cam_list.Clear()			
+		self.cam_list.Clear()			
 		print('Camera list cleared.')
-		self.system.ReleaseInstance()
-		print('System is released.')
+		# self.system.ReleaseInstance()
+		# print('System is released.')
 
 			
 	"""destructor: free up resources when done"""
@@ -2545,8 +2543,7 @@ def multithreading_test():
 
 	# c.start()
 	a.start()
-	a.clean_up()
-	'''
+
 	time.sleep(1)
 
 	# initialize the pulsecam processor
@@ -2585,7 +2582,8 @@ def multithreading_test():
 
 	b.join()
 	d.join()
-	'''
+
+	a.clean_up()
 if __name__ == "__main__":
 	# debug_test()
 	multithreading_test()
