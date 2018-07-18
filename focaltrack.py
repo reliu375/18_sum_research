@@ -1641,6 +1641,7 @@ class Display(threading.Thread):
 
 	def run(self):
 		global ending_key
+		pdb.set_trace()
 		t0 = time.time()
 		cv2.namedWindow("Focal Track Demo", cv2.WINDOW_NORMAL)
 		while True:
