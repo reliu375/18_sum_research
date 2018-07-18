@@ -1646,7 +1646,7 @@ class Display(threading.Thread):
 		while True:
 			self.t0 = time.time()
 			self.process()
-			self.icciv_output()
+			self.iccv_output()
 
 			# obtain the input
 			displayThread.acquire()
