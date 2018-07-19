@@ -2215,6 +2215,8 @@ class Display(threading.Thread):
 
 		self.t.append(time.time()-self.t0)
 
+		print('The iccv_output function is executed successfululy.')
+
 	def regular_output(self):
 		global DEPTH_RANGE
 		# backup the data for saving
