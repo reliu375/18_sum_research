@@ -1642,7 +1642,7 @@ class Display(threading.Thread):
 	def run(self):
 		global ending_key
 		pdb.set_trace()
-		t0 = time.time()
+		# t0 = time.time()
 		cv2.namedWindow("Focal Track Demo", cv2.WINDOW_NORMAL)
 		while True:
 			self.t0 = time.time()
@@ -1690,11 +1690,12 @@ class Display(threading.Thread):
 			self.t.append(time.time()-self.t0)
 
 			# display frame rate in real time
+			'''
 			if np.mod(self.frames,1000)==0:
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("display frame rate: (gross speed)", perf, " fps")
-
+			'''
 	def process(self):
 		self.I_cache = I_cache
 		# self.outside_I = outside_I
