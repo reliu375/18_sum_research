@@ -99,9 +99,9 @@ class OutsideCamera(threading.Thread):
 			self.grab_frame_and_process_opencv()
 			
 			# obtain the input
-			displayThread.acquire()
+			# displayThread.acquire()
 			c = cv2.waitKey(1) & 0xFF
-			displayThread.release()
+			# displayThread.release()
 			if c != 255:
 				ending_key = chr(c).lower()
 
@@ -292,9 +292,9 @@ class Camera(threading.Thread):
 			# pdb.set_trace()			
 
 			# obtain the input
-			displayThread.acquire()
+			# displayThread.acquire()
 			c = cv2.waitKey(1) & 0xFF
-			displayThread.release()
+			# displayThread.release()
 			if c != 255:
 				ending_key = chr(c).lower()
 
@@ -646,6 +646,7 @@ class PulseCamProcessorTF(threading.Thread):
 			string = "OF"+str(self.offset)+";"
 			self.ser.write(string.encode())
 			response = self.ser.read(self.ser.inWaiting())
+			print(response)
 
 		# we initialize with the tracking method to be passive
 		self.track_methods = ['track_Z_pid']
@@ -656,6 +657,7 @@ class PulseCamProcessorTF(threading.Thread):
 		self.graph = tf.Graph()
 		self.session = tf.Session(graph = self.graph)
 		self.data_type = tf.float32
+		print("graph")
 
 		# save the data from the camera
 		self.I_cache = np.zeros(self.resolution[0]+(2,), dtype = np.uint8)
@@ -669,19 +671,25 @@ class PulseCamProcessorTF(threading.Thread):
 
 		# make a video recorder
 		self.build_graph()
+		print("build graph")
 
 	def run(self):
+		print('Begin running the processor')
 		global ending_key
-		# t0 = time.time()
+		t0 = time.time()
 		while True:
 			# self.t0 = time.time()
+			print('Entering the while loop')
 			self.process()
+			print('Processing is complete. From Processor')
 			self.robust_track_Z()
+			print('Robust track is complete.')
 
 			# obtain the input
-			displayThread.acquire()
+			print('Is there a timer issue?')
+			# displayThread.acquire()
 			c = cv2.waitKey(1) & 0xFF
-			displayThread.release()
+			# displayThread.release()
 			if c != 255:
 				ending_key = chr(c).lower()
 
@@ -700,13 +708,13 @@ class PulseCamProcessorTF(threading.Thread):
 			# self.t.append(time.time()-self.t0)
 
 			# display frame rate in real time
-			'''
+			
 			if np.mod(self.frames,1000)==0:
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("FT avg performance: (gross speed)", perf, " fps")
 
-			'''
+			
 	"""describes the computations (graph) to run later
 		-make all algorithmic changes here
 		-note that tensorflow has a lot of support for backpropagation 
@@ -1665,11 +1673,11 @@ class Display(threading.Thread):
 
 			print('Is there a timer problem?')
 			# obtain the input
-			pdb.set_trace()
-			displayThread.acquire()
+			# pdb.set_trace()
+			# displayThread.acquire()
 			print('Is there a timer problem 2.0?')
 			c = cv2.waitKey(1) & 0xFF
-			displayThread.release()
+			# displayThread.release()
 			if c != 255:
 				ending_key = chr(c).lower()
 			
@@ -1960,9 +1968,9 @@ class Display(threading.Thread):
 		# backup the data for saving
 		
 		print('I wonder if we actually entered this function.')
-		pdb.set_trace()
+		# pdb.set_trace()
 		self.depth_data['Zf'] = copy.deepcopy(self.results['Zf'])
-		pdb.set_trace()
+		# pdb.set_trace()
 		self.depth_data['conff'] = copy.deepcopy(self.results['conf'])
 
 		if self.to_show():
@@ -2613,6 +2621,7 @@ def multithreading_test():
 		cfgf[i]['ra1_2'] = 0
 
 	b = PulseCamProcessorTF(cfg[0:-1], cfgf)
+	print('initialized TF processor')	
 	b.start()
 
 	time.sleep(5)
@@ -2621,10 +2630,13 @@ def multithreading_test():
 	
 	# c.join()
 	a.join()
-
 	b.join()
+
+	
+	
 	time.sleep(5)
 	d.join()
+	
 
 	a.clean_up()
 if __name__ == "__main__":
