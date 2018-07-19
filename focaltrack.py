@@ -667,9 +667,9 @@ class PulseCamProcessorTF(threading.Thread):
 
 	def run(self):
 		global ending_key
-		t0 = time.time()
+		# t0 = time.time()
 		while True:
-			self.t0 = time.time()
+			# self.t0 = time.time()
 			self.process()
 			self.robust_track_Z()
 
@@ -692,14 +692,16 @@ class PulseCamProcessorTF(threading.Thread):
 
 			self.frames += 1
 			self.frames_track += 1
-			self.t.append(time.time()-self.t0)
+			# self.t.append(time.time()-self.t0)
 
 			# display frame rate in real time
+			'''
 			if np.mod(self.frames,1000)==0:
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("FT avg performance: (gross speed)", perf, " fps")
 
+			'''
 	"""describes the computations (graph) to run later
 		-make all algorithmic changes here
 		-note that tensorflow has a lot of support for backpropagation 
@@ -1645,7 +1647,7 @@ class Display(threading.Thread):
 		# t0 = time.time()
 		cv2.namedWindow("Focal Track Demo", cv2.WINDOW_NORMAL)
 		while True:
-			self.t0 = time.time()
+			# self.t0 = time.time()
 			self.process()
 			self.iccv_output()
 
@@ -1687,7 +1689,7 @@ class Display(threading.Thread):
 				ending_key = 'c'
 
 			self.frames += 1
-			self.t.append(time.time()-self.t0)
+			# self.t.append(time.time()-self.t0)
 
 			# display frame rate in real time
 			'''
@@ -1811,7 +1813,7 @@ class Display(threading.Thread):
 		cv2.imshow("Focal Track Demo", self.cache['draw'])
 		displayThread.release()
 
-		self.t.append(time.time()-self.t0)
+		# self.t.append(time.time()-self.t0)
 
 	def iccp_output(self):	
 		# backup the data for saving
@@ -1941,8 +1943,9 @@ class Display(threading.Thread):
 	import scipy.signal
 	def iccv_output(self):	
 		# backup the data for saving
-		# pdb.set_trace()
+		
 		print('I wonder if we actually entered this function.')
+		pdb.set_trace()
 		self.depth_data['Zf'] = copy.deepcopy(self.results['Zf'])
 		self.depth_data['conff'] = copy.deepcopy(self.results['conf'])
 
@@ -2214,7 +2217,7 @@ class Display(threading.Thread):
 		cv2.imshow("Focal Track Demo", self.cache['draw'])
 		displayThread.release()
 
-		self.t.append(time.time()-self.t0)
+		# self.t.append(time.time()-self.t0)
 
 		print('The iccv_output function is executed successfululy.')
 
@@ -2268,7 +2271,7 @@ class Display(threading.Thread):
 		cv2.imshow("Focal Track Demo", self.cache['draw'])
 		displayThread.release()
 		
-		self.t.append(time.time()-self.t0)
+		# self.t.append(time.time()-self.t0)
 
 	def regular_output_pairs(self):
 		global DEPTH_RANGE
@@ -2327,7 +2330,7 @@ class Display(threading.Thread):
 		cv2.imshow("Focal Track Demo", self.cache['draw'])
 		displayThread.release()
 		
-		self.t.append(time.time()-self.t0)
+		# self.t.append(time.time()-self.t0)
 
 	def regular_output_layers(self):
 		# query data
@@ -2405,7 +2408,7 @@ class Display(threading.Thread):
 								)
 		# self.save_video()
 		cv2.imshow("Focal Track Demo", self.cache['draw'])
-		self.t.append(time.time()-self.t0)
+		# self.t.append(time.time()-self.t0)
 
 	def prep_for_draw_demo(self, I, log = False, title = None, message = None, rng = [np.NaN, np.NaN]):
 		if len(I.shape) == 2 or I.shape[2] == 1:
