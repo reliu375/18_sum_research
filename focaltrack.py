@@ -272,19 +272,21 @@ class Camera(threading.Thread):
 	def run(self):
 		global ending_key
 		# The code to capture images
-		'''
-		t0 = time.time()
+		
+		# t0 = time.time()
 		while True:
+			'''
 			if self.t0 != 0:
 				t1 = time.time()
 				self.time_lapse = t1 - self.t0
 				self.t0 = t1
 			else:
 				self.t0 = time.time()
-		'''
+			'''
 
 			# self.grab_frame_and_process_ptg()
 			# self.regular_output()
+			
 			self.grab_frame_and_process_spinnaker()
 
 			# pdb.set_trace()			
@@ -498,6 +500,7 @@ class Camera(threading.Thread):
 	def grab_frame_and_process_spinnaker(self):
 
 		# Grab the next image and convert it to a numpy array.
+		# print('Is there a segmentation fault?')
 		image_result = self.cam.GetNextImage()
 		image_data = image_result.GetNDArray()
 
@@ -1645,16 +1648,26 @@ class Display(threading.Thread):
 
 	def run(self):
 		global ending_key
-		pdb.set_trace()
-		# t0 = time.time()
-		cv2.namedWindow("Focal Track Demo", cv2.WINDOW_NORMAL)
+		# pdb.set_trace()
+		t0 = time.time()
+		print('The timer for the display thread is initialized.')
+		# pdb.set_trace()
+		# cv2.namedWindow("Focal Track Demo", cv2.WINDOW_NORMAL)
+		print('The window is opened now')
+		# pdb.set_trace()
 		while True:
-			# self.t0 = time.time()
+			print('Entering the while loop')
+			self.t0 = time.time()
+			print('Another timer is setup')
 			self.process()
+			print('An image is processed')
 			self.iccv_output()
 
+			print('Is there a timer problem?')
 			# obtain the input
+			pdb.set_trace()
 			displayThread.acquire()
+			print('Is there a timer problem 2.0?')
 			c = cv2.waitKey(1) & 0xFF
 			displayThread.release()
 			if c != 255:
@@ -1691,15 +1704,15 @@ class Display(threading.Thread):
 				ending_key = 'c'
 
 			self.frames += 1
-			# self.t.append(time.time()-self.t0)
+			self.t.append(time.time()-self.t0)
 
 			# display frame rate in real time
-			'''
+			
 			if np.mod(self.frames,1000)==0:
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("display frame rate: (gross speed)", perf, " fps")
-			'''
+			
 	def process(self):
 		self.I_cache = I_cache
 		# self.outside_I = outside_I
@@ -1949,6 +1962,7 @@ class Display(threading.Thread):
 		print('I wonder if we actually entered this function.')
 		pdb.set_trace()
 		self.depth_data['Zf'] = copy.deepcopy(self.results['Zf'])
+		pdb.set_trace()
 		self.depth_data['conff'] = copy.deepcopy(self.results['conf'])
 
 		if self.to_show():
