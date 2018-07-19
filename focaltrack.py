@@ -1942,6 +1942,7 @@ class Display(threading.Thread):
 	def iccv_output(self):	
 		# backup the data for saving
 		# pdb.set_trace()
+		print('I wonder if we actually entered this function.')
 		self.depth_data['Zf'] = copy.deepcopy(self.results['Zf'])
 		self.depth_data['conff'] = copy.deepcopy(self.results['conf'])
 
