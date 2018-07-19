@@ -272,6 +272,7 @@ class Camera(threading.Thread):
 	def run(self):
 		global ending_key
 		# The code to capture images
+		'''
 		t0 = time.time()
 		while True:
 			if self.t0 != 0:
@@ -280,6 +281,7 @@ class Camera(threading.Thread):
 				self.t0 = t1
 			else:
 				self.t0 = time.time()
+		'''
 
 			# self.grab_frame_and_process_ptg()
 			# self.regular_output()
@@ -298,7 +300,7 @@ class Camera(threading.Thread):
 				print("quitting")
 				self.final_statistics()
 				break
-
+		'''
 			self.t.append(time.time()-self.t0)
 
 			# display frame rate in real time
@@ -306,7 +308,7 @@ class Camera(threading.Thread):
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("camera capture frame rate: (gross speed)", perf, " fps")
-	
+		'''
 		
 	def initialize_camera_ptg(self):
 		#access the point grey camera using flycap
@@ -1920,7 +1922,7 @@ class Display(threading.Thread):
 		cv2.imshow("Focal Track Demo", self.cache['draw'])
 		displayThread.release()
 
-		self.t.append(time.time()-self.t0)
+		# self.t.append(time.time()-self.t0)
 
 	def bilateral(self, I, Z, conf):
 		return cv2.bilateralFilter(Z,5,0.3,3)
