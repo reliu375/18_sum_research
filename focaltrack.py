@@ -273,16 +273,16 @@ class Camera(threading.Thread):
 		global ending_key
 		# The code to capture images
 		
-		# t0 = time.time()
+		t0 = time.time()
 		while True:
-			'''
+			
 			if self.t0 != 0:
 				t1 = time.time()
 				self.time_lapse = t1 - self.t0
 				self.t0 = t1
 			else:
 				self.t0 = time.time()
-			'''
+			
 
 			# self.grab_frame_and_process_ptg()
 			# self.regular_output()
@@ -291,6 +291,7 @@ class Camera(threading.Thread):
 
 			# pdb.set_trace()			
 
+			'''
 			# obtain the input
 			# displayThread.acquire()
 			c = cv2.waitKey(1) & 0xFF
@@ -302,7 +303,7 @@ class Camera(threading.Thread):
 				print("quitting")
 				self.final_statistics()
 				break
-		'''
+			'''
 			self.t.append(time.time()-self.t0)
 
 			# display frame rate in real time
@@ -310,7 +311,7 @@ class Camera(threading.Thread):
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("camera capture frame rate: (gross speed)", perf, " fps")
-		'''
+
 		
 	def initialize_camera_ptg(self):
 		#access the point grey camera using flycap
@@ -401,13 +402,13 @@ class Camera(threading.Thread):
 		print('Begin getting images')
 		
 		self.im = self.cam.GetNextImage()
-		pdb.set_trace()
+		# pdb.set_trace()
 		image_data = self.im.GetNDArray()
-		pdb.set_trace()
+		# pdb.set_trace()
 		self.im.Release()
 		# image_data = image.getNDArray()
 
-		pdb.set_trace()
+		# pdb.set_trace()
 
 		image_data = scipy.misc.imresize(image_data, 1/self.cfg['downscale'])
 		self.resolution = (
@@ -676,23 +677,24 @@ class PulseCamProcessorTF(threading.Thread):
 	def run(self):
 		print('Begin running the processor')
 		global ending_key
-		t0 = time.time()
+		self.t0 = time.time()
 		while True:
 			# self.t0 = time.time()
-			print('Entering the while loop')
+			# print('Entering the while loop')
 			self.process()
-			print('Processing is complete. From Processor')
+			# print('Processing is complete. From Processor')
 			self.robust_track_Z()
-			print('Robust track is complete.')
+			# print('Robust track is complete.')
 
+			'''
 			# obtain the input
-			print('Is there a timer issue?')
+			# print('Is there a timer issue?')
 			# displayThread.acquire()
 			c = cv2.waitKey(1) & 0xFF
 			# displayThread.release()
 			if c != 255:
 				ending_key = chr(c).lower()
-
+			
 			# quit
 			if ending_key == 'q':
 				print("quitting")
@@ -702,10 +704,11 @@ class PulseCamProcessorTF(threading.Thread):
 			# reset to the scanner
 			if ending_key == 'r':
 				self.robust_mode = 'scanner_starter'
+			'''
 
 			self.frames += 1
 			self.frames_track += 1
-			# self.t.append(time.time()-self.t0)
+			self.t.append(time.time()-self.t0)
 
 			# display frame rate in real time
 			
@@ -1664,22 +1667,26 @@ class Display(threading.Thread):
 		print('The window is opened now')
 		# pdb.set_trace()
 		while True:
-			print('Entering the while loop')
+			# print('Entering the while loop')
 			self.t0 = time.time()
-			print('Another timer is setup')
+			# print('Another timer is setup')
 			self.process()
-			print('An image is processed')
+			# print('An image is processed')
 			self.iccv_output()
-
-			print('Is there a timer problem?')
+			
+			# print('Is there a timer problem?')
 			# obtain the input
 			# pdb.set_trace()
-			# displayThread.acquire()
-			print('Is there a timer problem 2.0?')
-			c = cv2.waitKey(1) & 0xFF
-			# displayThread.release()
-			if c != 255:
+			displayThread.acquire()
+			# print('Is there a timer problem 2.0?')
+			c = cv2.waitKey(1) 
+			# & 0xFF
+			displayThread.release()
+			
+			if c != 255 and c != -1:
+				print(c)
 				ending_key = chr(c).lower()
+				print('The if statement is evaluated to be true. The end key is set to c.')
 			
 			# quit
 			if ending_key == 'q':
@@ -1710,7 +1717,7 @@ class Display(threading.Thread):
 				self.show_mode += 1 
 				self.show_mode = np.mod(self.show_mode, len(self.show_modes))
 				ending_key = 'c'
-
+			
 			self.frames += 1
 			self.t.append(time.time()-self.t0)
 
@@ -1967,7 +1974,7 @@ class Display(threading.Thread):
 	def iccv_output(self):	
 		# backup the data for saving
 		
-		print('I wonder if we actually entered this function.')
+		# print('I wonder if we actually entered this function.')
 		# pdb.set_trace()
 		self.depth_data['Zf'] = copy.deepcopy(self.results['Zf'])
 		# pdb.set_trace()
@@ -2243,7 +2250,7 @@ class Display(threading.Thread):
 
 		# self.t.append(time.time()-self.t0)
 
-		print('The iccv_output function is executed successfululy.')
+		# print('The iccv_output function is executed successfully.')
 
 	def regular_output(self):
 		global DEPTH_RANGE
