@@ -679,6 +679,7 @@ class PulseCamProcessorTF(threading.Thread):
 		global ending_key
 		self.t0 = time.time()
 		while True:
+			print('Entering the while loop for PROCESSOR RUN')
 			# self.t0 = time.time()
 			# print('Entering the while loop')
 			self.process()
@@ -717,6 +718,7 @@ class PulseCamProcessorTF(threading.Thread):
 				perf = (1.0*self.frames)/(t1-t0)
 				print("FT avg performance: (gross speed)", perf, " fps")
 
+			print('Exiting the while loop for DISPLAY RUN')
 			
 	"""describes the computations (graph) to run later
 		-make all algorithmic changes here
@@ -1667,7 +1669,7 @@ class Display(threading.Thread):
 		print('The window is opened now')
 		# pdb.set_trace()
 		while True:
-			# print('Entering the while loop')
+			print('Entering the while loop for DISPLAY RUN')
 			self.t0 = time.time()
 			# print('Another timer is setup')
 			self.process()
@@ -1728,6 +1730,7 @@ class Display(threading.Thread):
 				perf = (1.0*self.frames)/(t1-t0)
 				print("display frame rate: (gross speed)", perf, " fps")
 			
+			print('Exiting the while loop for DISPLAY RUN')
 	def process(self):
 		self.I_cache = I_cache
 		# self.outside_I = outside_I
