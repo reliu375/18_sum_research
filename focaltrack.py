@@ -706,7 +706,7 @@ class PulseCamProcessorTF(threading.Thread):
 			if ending_key == 'r':
 				self.robust_mode = 'scanner_starter'
 			'''
-
+			print('Halfway through.')
 			self.frames += 1
 			self.frames_track += 1
 			self.t.append(time.time()-self.t0)
