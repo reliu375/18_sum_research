@@ -675,11 +675,11 @@ class PulseCamProcessorTF(threading.Thread):
 		print("build graph")
 
 	def run(self):
-		print('Begin running the processor')
+		# print('Begin running the processor')
 		global ending_key
-		self.t0 = time.time()
+		t0 = time.time()
 		while True:
-			print('Entering the while loop for PROCESSOR RUN')
+			# print('Entering the while loop for PROCESSOR RUN')
 			# self.t0 = time.time()
 			# print('Entering the while loop')
 			self.process()
@@ -706,19 +706,19 @@ class PulseCamProcessorTF(threading.Thread):
 			if ending_key == 'r':
 				self.robust_mode = 'scanner_starter'
 			'''
-			print('Halfway through.')
+			# print('Halfway through.')
 			self.frames += 1
 			self.frames_track += 1
-			self.t.append(time.time()-self.t0)
+			self.t.append(time.time()-t0)
 
 			# display frame rate in real time
 			
-			if np.mod(self.frames,1000)==0:
+			if np.mod(self.frames,10)==0:
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("FT avg performance: (gross speed)", perf, " fps")
 
-			print('Exiting the while loop for DISPLAY RUN')
+			# print('Exiting the while loop for PROCESSOR RUN')
 			
 	"""describes the computations (graph) to run later
 		-make all algorithmic changes here
@@ -1663,18 +1663,20 @@ class Display(threading.Thread):
 		global ending_key
 		# pdb.set_trace()
 		t0 = time.time()
-		print('The timer for the display thread is initialized.')
+		# print('The timer for the display thread is initialized.')
 		# pdb.set_trace()
 		# cv2.namedWindow("Focal Track Demo", cv2.WINDOW_NORMAL)
-		print('The window is opened now')
+		# print('The window is opened now')
 		# pdb.set_trace()
 		while True:
-			print('Entering the while loop for DISPLAY RUN')
+			# print('Entering the while loop for DISPLAY RUN')
 			self.t0 = time.time()
-			# print('Another timer is setup')
+			# print('Another timer is setup, from DISPLAY')
 			self.process()
-			# print('An image is processed')
+			# print('An image is processed, from DISPLAY')
 			self.iccv_output()
+
+			# print('Everything before this point of the while loop is properly run.')
 			
 			# print('Is there a timer problem?')
 			# obtain the input
@@ -1684,6 +1686,8 @@ class Display(threading.Thread):
 			c = cv2.waitKey(1) 
 			# & 0xFF
 			displayThread.release()
+
+			# print('Display threads are working right now.')
 			
 			if c != 255 and c != -1:
 				print(c)
@@ -1726,11 +1730,12 @@ class Display(threading.Thread):
 			# display frame rate in real time
 			
 			if np.mod(self.frames,1000)==0:
+				print('The last if statement is true.')
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("display frame rate: (gross speed)", perf, " fps")
 			
-			print('Exiting the while loop for DISPLAY RUN')
+			# print('Exiting the while loop for DISPLAY RUN')
 	def process(self):
 		self.I_cache = I_cache
 		# self.outside_I = outside_I
