@@ -275,7 +275,7 @@ class Camera(threading.Thread):
 		
 		t0 = time.time()
 		while True:
-			
+			time.sleep(0.5)
 			if self.t0 != 0:
 				t1 = time.time()
 				self.time_lapse = t1 - self.t0
@@ -560,6 +560,7 @@ class Camera(threading.Thread):
 		print('Camera list cleared.')
 		# self.system.ReleaseInstance()
 		# print('System is released.')
+		self.system.ReleaseInstance()
 
 			
 	"""destructor: free up resources when done"""
@@ -659,7 +660,7 @@ class PulseCamProcessorTF(threading.Thread):
 		self.session = tf.Session(graph = self.graph)
 		self.data_type = tf.float32
 		print("graph")
-
+		
 		# save the data from the camera
 		self.I_cache = np.zeros(self.resolution[0]+(2,), dtype = np.uint8)
 		
@@ -669,12 +670,13 @@ class PulseCamProcessorTF(threading.Thread):
 		self.old_idx = 0
 		self.old_data['Z'] = [[] for i in range(self.old_num)]
 		self.old_data['conf'] = [[] for i in range(self.old_num)]
-
+		
 		# make a video recorder
 		self.build_graph()
 		print("build graph")
 
 	def run(self):
+		# pdb.set_trace()
 		# print('Begin running the processor')
 		global ending_key
 		t0 = time.time()
@@ -682,10 +684,16 @@ class PulseCamProcessorTF(threading.Thread):
 			# print('Entering the while loop for PROCESSOR RUN')
 			# self.t0 = time.time()
 			# print('Entering the while loop')
+			# pdb.set_trace()
 			self.process()
 			# print('Processing is complete. From Processor')
+			# pdb.set_trace()
 			self.robust_track_Z()
 			# print('Robust track is complete.')
+
+			displayThread.acquire()
+			time.sleep(0.001)
+			displayThread.release()
 
 			'''
 			# obtain the input
@@ -713,7 +721,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 			# display frame rate in real time
 			
-			if np.mod(self.frames,10)==0:
+			if np.mod(self.frames,100)==0:
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("FT avg performance: (gross speed)", perf, " fps")
@@ -777,7 +785,7 @@ class PulseCamProcessorTF(threading.Thread):
 			yr = tf.reduce_sum(tf.stack(yr,0),0)
 
 			zr = xr * yr
-
+			
 			# radially confidence attenuation
 			pxd = tf.stack([px[k]*(len(px)-1-k) for k in range(len(px)-1)],-1)
 			rxs = tf.py_func(np.roots, [pxd], tf.float32)
@@ -826,6 +834,7 @@ class PulseCamProcessorTF(threading.Thread):
 				dIdt(I, self.cfg[0]['fave'])]
 			)
 			# tmp_I = tf.transpose(I, perm=[2,0,1])
+
 			for i in range(len(self.cfg)):
 				# initialize variables				
 				"""Input parameters"""
@@ -924,7 +933,7 @@ class PulseCamProcessorTF(threading.Thread):
 				self.vars[i]['u_4'] = u_4[i]
 				self.vars[i]['u_3f']= u_3f[i]
 				self.vars[i]['u_4f']= u_4f[i]
-
+			
 			# align depth and confidence maps
 			self.align_maps_ext(['u_2','u_2f','u_3','u_4','u_3f','u_4f'])
 
@@ -935,6 +944,7 @@ class PulseCamProcessorTF(threading.Thread):
 					[-1, len(self.cfg)*self.cfg[0]['ext_f'].shape[0]]
 				)
 
+			pdb.set_trace()
 			# compute the aligned version of Z
 			self.vars_align['Z'] = \
 				self.vars_align['u_3'] / (self.vars_align['u_4'] + 1e-5)
@@ -942,12 +952,14 @@ class PulseCamProcessorTF(threading.Thread):
 			self.vars_align['Zf'] = \
 				self.vars_align['u_3f'] / (self.vars_align['u_4f']+ 1e-5)
 
+			pdb.set_trace()
 			# compute windowed and unwindowed confidence
 			eval('self.'+self.cfg[0]['conf_func']+'()')
 
 			# fusion
 			self.softmax_fusion()
 
+			pdb.set_trace()
 			# radial correction
 			self.vars_fuse['Zf'] /= zr
 			self.vars_align['conf_non'] = self.vars_align['conf']
@@ -1151,7 +1163,8 @@ class PulseCamProcessorTF(threading.Thread):
 	def process(self):
 		global results
 		# input the data
-		self.input_dict[self.I_in] = I_cache		
+		self.input_dict[self.I_in] = I_cache	
+		# self.input_dict[self.I_in] = np.zeros([300,480,2])	
 		self.input_dict[self.a1_in] = self.cfg[0]['a1']
 		self.input_dict[self.offset_in] = self.offset
 
@@ -1160,14 +1173,16 @@ class PulseCamProcessorTF(threading.Thread):
 		# run it
 		self.image_to_show = ['Z','Zf','conf','u_2','conf_non']
 		res_dict = {}
+	
 		for k in self.image_to_show:
 			res_dict[k] = self.vars_fuse[k]
+		
 		self.results = self.session.run(res_dict)
 
 		# if self.robust_mode == 'tracker':
 		# 	# keep the correct sequence
 		# 	self.keep_sequence()
-
+		
 		self.swap_frames()
 
 		# pdb.set_trace()
@@ -1669,6 +1684,7 @@ class Display(threading.Thread):
 		# print('The window is opened now')
 		# pdb.set_trace()
 		while True:
+			time.sleep(0.5)
 			# print('Entering the while loop for DISPLAY RUN')
 			self.t0 = time.time()
 			# print('Another timer is setup, from DISPLAY')
@@ -1683,8 +1699,7 @@ class Display(threading.Thread):
 			# pdb.set_trace()
 			displayThread.acquire()
 			# print('Is there a timer problem 2.0?')
-			c = cv2.waitKey(1) 
-			# & 0xFF
+			c = cv2.waitKey(1) & 0xFF
 			displayThread.release()
 
 			# print('Display threads are working right now.')
@@ -1729,7 +1744,7 @@ class Display(threading.Thread):
 
 			# display frame rate in real time
 			
-			if np.mod(self.frames,1000)==0:
+			if np.mod(self.frames,100)==0:
 				print('The last if statement is true.')
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
@@ -2609,7 +2624,7 @@ def multithreading_test():
 	# c.start()
 	a.start()
 
-	time.sleep(1)
+	time.sleep(3)
 
 	# initialize the pulsecam processor
 	# cfg_file = "./opt_results/pyConfLensFlowNetFast/"+\
@@ -2636,12 +2651,15 @@ def multithreading_test():
 		cfgf[i]['ra1_2'] = 0
 
 	b = PulseCamProcessorTF(cfg[0:-1], cfgf)
-	print('initialized TF processor')	
+	print('initialized TF processor')
+	# b.run()	
+	# pdb.set_trace()	
 	b.start()
 
 	time.sleep(5)
-	d = Display(cfg[0:-1], cfgf)	
-	d.start()
+	# d = Display(cfg[0:-1], cfgf)
+	print('display initialized')	
+	# d.start()
 	
 	# c.join()
 	a.join()
@@ -2650,7 +2668,7 @@ def multithreading_test():
 	
 	
 	time.sleep(5)
-	d.join()
+	# d.join()
 	
 
 	a.clean_up()
