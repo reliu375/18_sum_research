@@ -283,13 +283,13 @@ class Camera(threading.Thread):
 			else:
 				self.t0 = time.time()
 			
-
+			self.grab_frame_and_process_spinnaker()
 			# self.grab_frame_and_process_ptg()
 			# self.regular_output()
 			
 			# Block other things to access the same source by locking up the resource.
 			displayThread.acquire()
-			self.grab_frame_and_process_spinnaker()
+			
 			displayThread.release()
 			# pdb.set_trace()			
 
@@ -309,7 +309,7 @@ class Camera(threading.Thread):
 			self.t.append(time.time()-self.t0)
 
 			# display frame rate in real time
-			if np.mod(self.frames,1000)==0:
+			if np.mod(self.frames,100)==0:
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("camera capture frame rate: (gross speed)", perf, " fps")
@@ -690,13 +690,14 @@ class PulseCamProcessorTF(threading.Thread):
 
 			# Acquire the condition lock and wait for its release
 			displayThread.acquire()
-			displayThread.wait()
+			# displayThread.wait()
 			self.process()
 			# print('Processing is complete. From Processor')
 			# pdb.set_trace()
-			self.robust_track_Z()
 			# print('Robust track is complete.')
 			displayThread.release()
+
+			self.robust_track_Z()
 			'''
 			# obtain the input
 			# print('Is there a timer issue?')
@@ -1686,7 +1687,6 @@ class Display(threading.Thread):
 		# print('The window is opened now')
 		# pdb.set_trace()
 		while True:
-			time.sleep(0.5)
 			# print('Entering the while loop for DISPLAY RUN')
 			self.t0 = time.time()
 			# print('Another timer is setup, from DISPLAY')
@@ -2659,9 +2659,9 @@ def multithreading_test():
 	b.start()
 
 	time.sleep(5)
-	# d = Display(cfg[0:-1], cfgf)
+	d = Display(cfg[0:-1], cfgf)
 	print('display initialized')	
-	# d.start()
+	d.start()
 	
 	# c.join()
 	a.join()
@@ -2670,7 +2670,7 @@ def multithreading_test():
 	
 	
 	time.sleep(5)
-	# d.join()
+	d.join()
 	
 
 	a.clean_up()
