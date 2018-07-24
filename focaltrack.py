@@ -29,6 +29,7 @@ import pdb
 #multithreading
 import threading
 displayThread = threading.Condition()
+processLock = threading.Lock()
 I_cache = 0
 I_idx = 0 # update idx
 outside_I = 0
@@ -288,9 +289,7 @@ class Camera(threading.Thread):
 			# self.regular_output()
 			
 			# Block other things to access the same source by locking up the resource.
-			displayThread.acquire()
 			
-			displayThread.release()
 			# pdb.set_trace()			
 
 			'''
@@ -463,7 +462,9 @@ class Camera(threading.Thread):
 		self.I_cache[:,:,I_idx] = self.cache['gray']
 
 		# Lock the global variables, to updates those images
+		# displayThread.acquire()
 		I_cache = self.I_cache
+		# displayThread.release()
 
 		self.frames += 1			
 		return
@@ -1166,8 +1167,8 @@ class PulseCamProcessorTF(threading.Thread):
 	def process(self):
 		global results
 		# input the data
-		self.input_dict[self.I_in] = I_cache	
-		# self.input_dict[self.I_in] = np.zeros([300,480,2])	
+		# self.input_dict[self.I_in] = I_cache	
+		self.input_dict[self.I_in] = np.zeros([300,480,2])	
 		self.input_dict[self.a1_in] = self.cfg[0]['a1']
 		self.input_dict[self.offset_in] = self.offset
 
@@ -1687,11 +1688,11 @@ class Display(threading.Thread):
 		# print('The window is opened now')
 		# pdb.set_trace()
 		while True:
-			# print('Entering the while loop for DISPLAY RUN')
+			
 			self.t0 = time.time()
-			# print('Another timer is setup, from DISPLAY')
+			
 			self.process()
-			# print('An image is processed, from DISPLAY')
+			
 			self.iccv_output()
 
 			# print('Everything before this point of the while loop is properly run.')
@@ -2626,8 +2627,8 @@ def multithreading_test():
 	# c.start()
 	a.start()
 
-	time.sleep(3)
-
+	# time.sleep(1)
+	
 	# initialize the pulsecam processor
 	# cfg_file = "./opt_results/pyConfLensFlowNetFast/"+\
 	# 	"1x1t-text34-setup5-py4-w3r-whole.pickle"
@@ -2657,20 +2658,21 @@ def multithreading_test():
 	# b.run()	
 	# pdb.set_trace()	
 	b.start()
-
+	'''
 	time.sleep(5)
 	d = Display(cfg[0:-1], cfgf)
 	print('display initialized')	
 	d.start()
-	
+	'''
+
 	# c.join()
 	a.join()
 	b.join()
 
 	
 	
-	time.sleep(5)
-	d.join()
+	# time.sleep(5)
+	# d.join()
 	
 
 	a.clean_up()
