@@ -29,7 +29,7 @@ import pdb
 #multithreading
 import threading
 displayThread = threading.Condition()
-processLock = threading.Lock()
+processorLock = threading.Condition()
 I_cache = 0
 I_idx = 0 # update idx
 outside_I = 0
@@ -284,6 +284,7 @@ class Camera(threading.Thread):
 			else:
 				self.t0 = time.time()
 			
+			# print('capturing pictures')
 			self.grab_frame_and_process_spinnaker()
 			# self.grab_frame_and_process_ptg()
 			# self.regular_output()
@@ -462,9 +463,9 @@ class Camera(threading.Thread):
 		self.I_cache[:,:,I_idx] = self.cache['gray']
 
 		# Lock the global variables, to updates those images
-		# displayThread.acquire()
+		displayThread.acquire()
 		I_cache = self.I_cache
-		# displayThread.release()
+		displayThread.release()
 
 		self.frames += 1			
 		return
@@ -690,13 +691,13 @@ class PulseCamProcessorTF(threading.Thread):
 			# pdb.set_trace()
 
 			# Acquire the condition lock and wait for its release
-			displayThread.acquire()
+			
 			# displayThread.wait()
 			self.process()
 			# print('Processing is complete. From Processor')
 			# pdb.set_trace()
 			# print('Robust track is complete.')
-			displayThread.release()
+			
 
 			self.robust_track_Z()
 			'''
@@ -725,7 +726,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 			# display frame rate in real time
 			
-			if np.mod(self.frames,100)==0:
+			if np.mod(self.frames,10)==0:
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("FT avg performance: (gross speed)", perf, " fps")
@@ -948,7 +949,7 @@ class PulseCamProcessorTF(threading.Thread):
 					[-1, len(self.cfg)*self.cfg[0]['ext_f'].shape[0]]
 				)
 
-			pdb.set_trace()
+			# pdb.set_trace()
 			# compute the aligned version of Z
 			self.vars_align['Z'] = \
 				self.vars_align['u_3'] / (self.vars_align['u_4'] + 1e-5)
@@ -956,14 +957,14 @@ class PulseCamProcessorTF(threading.Thread):
 			self.vars_align['Zf'] = \
 				self.vars_align['u_3f'] / (self.vars_align['u_4f']+ 1e-5)
 
-			pdb.set_trace()
+			# pdb.set_trace()
 			# compute windowed and unwindowed confidence
 			eval('self.'+self.cfg[0]['conf_func']+'()')
 
 			# fusion
 			self.softmax_fusion()
 
-			pdb.set_trace()
+			# pdb.set_trace()
 			# radial correction
 			self.vars_fuse['Zf'] /= zr
 			self.vars_align['conf_non'] = self.vars_align['conf']
@@ -1167,8 +1168,10 @@ class PulseCamProcessorTF(threading.Thread):
 	def process(self):
 		global results
 		# input the data
-		# self.input_dict[self.I_in] = I_cache	
-		self.input_dict[self.I_in] = np.zeros([300,480,2])	
+		displayThread.acquire()
+		self.input_dict[self.I_in] = I_cache
+		displayThread.release()	
+		# self.input_dict[self.I_in] = np.zeros([300,480,2])	
 		self.input_dict[self.a1_in] = self.cfg[0]['a1']
 		self.input_dict[self.offset_in] = self.offset
 
