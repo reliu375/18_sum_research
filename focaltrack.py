@@ -275,7 +275,7 @@ class Camera(threading.Thread):
 		
 		t0 = time.time()
 		while True:
-			time.sleep(0.5)
+			# time.sleep(0.5)
 			if self.t0 != 0:
 				t1 = time.time()
 				self.time_lapse = t1 - self.t0
@@ -287,8 +287,10 @@ class Camera(threading.Thread):
 			# self.grab_frame_and_process_ptg()
 			# self.regular_output()
 			
+			# Block other things to access the same source by locking up the resource.
+			displayThread.acquire()
 			self.grab_frame_and_process_spinnaker()
-
+			displayThread.release()
 			# pdb.set_trace()			
 
 			'''
@@ -685,16 +687,16 @@ class PulseCamProcessorTF(threading.Thread):
 			# self.t0 = time.time()
 			# print('Entering the while loop')
 			# pdb.set_trace()
+
+			# Acquire the condition lock and wait for its release
+			displayThread.acquire()
+			displayThread.wait()
 			self.process()
 			# print('Processing is complete. From Processor')
 			# pdb.set_trace()
 			self.robust_track_Z()
 			# print('Robust track is complete.')
-
-			displayThread.acquire()
-			time.sleep(0.001)
 			displayThread.release()
-
 			'''
 			# obtain the input
 			# print('Is there a timer issue?')
