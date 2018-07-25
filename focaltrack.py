@@ -1170,6 +1170,7 @@ class PulseCamProcessorTF(threading.Thread):
 		# input the data
 		displayThread.acquire()
 		self.input_dict[self.I_in] = I_cache
+		# displayThread.notify()
 		displayThread.release()	
 		# self.input_dict[self.I_in] = np.zeros([300,480,2])	
 		self.input_dict[self.a1_in] = self.cfg[0]['a1']
@@ -1193,9 +1194,11 @@ class PulseCamProcessorTF(threading.Thread):
 		self.swap_frames()
 
 		# pdb.set_trace()
-
+		
+		displayThread.acquire()
 		results = self.results
-
+		displayThread.release()		
+		
 		return
 
 	def keep_sequence(self):
@@ -1693,20 +1696,22 @@ class Display(threading.Thread):
 		while True:
 			
 			self.t0 = time.time()
-			
+			# displayThread.acquire()
+			# displayThread.wait()
 			self.process()
-			
+			# displayThread.release()
 			self.iccv_output()
-
+			
+			'''
 			# print('Everything before this point of the while loop is properly run.')
 			
 			# print('Is there a timer problem?')
 			# obtain the input
 			# pdb.set_trace()
-			displayThread.acquire()
+			# displayThread.acquire()
 			# print('Is there a timer problem 2.0?')
 			c = cv2.waitKey(1) & 0xFF
-			displayThread.release()
+			# displayThread.release()
 
 			# print('Display threads are working right now.')
 			
@@ -1744,7 +1749,7 @@ class Display(threading.Thread):
 				self.show_mode += 1 
 				self.show_mode = np.mod(self.show_mode, len(self.show_modes))
 				ending_key = 'c'
-			
+			'''
 			self.frames += 1
 			self.t.append(time.time()-self.t0)
 
@@ -1758,9 +1763,13 @@ class Display(threading.Thread):
 			
 			# print('Exiting the while loop for DISPLAY RUN')
 	def process(self):
+		displayThread.acquire()
 		self.I_cache = I_cache
+		displayThread.release()
 		# self.outside_I = outside_I
+		displayThread.acquire()
 		self.results = results
+		displayThread.release()
 		return
 
 	def to_show(self):
@@ -2014,9 +2023,11 @@ class Display(threading.Thread):
 		else:
 			conf_thre = 0
 
+		# displayThread.acquire()
 		# print("DEPTH_RANGE", DEPTH_RANGE)
 		self.results['I_0'] = self.I_cache[:,:,1].astype(np.float32)
 		self.results['I_1'] = self.I_cache[:,:,1].astype(np.float32)
+		# displayThread.release()
 
 		# backup the data for saving
 		self.depth_data['I_0'] = self.results['I_0']
@@ -2630,7 +2641,7 @@ def multithreading_test():
 	# c.start()
 	a.start()
 
-	# time.sleep(1)
+	time.sleep(2)
 	
 	# initialize the pulsecam processor
 	# cfg_file = "./opt_results/pyConfLensFlowNetFast/"+\
@@ -2661,12 +2672,12 @@ def multithreading_test():
 	# b.run()	
 	# pdb.set_trace()	
 	b.start()
-	'''
+	
 	time.sleep(5)
 	d = Display(cfg[0:-1], cfgf)
 	print('display initialized')	
 	d.start()
-	'''
+	
 
 	# c.join()
 	a.join()
@@ -2674,8 +2685,8 @@ def multithreading_test():
 
 	
 	
-	# time.sleep(5)
-	# d.join()
+	time.sleep(5)
+	d.join()
 	
 
 	a.clean_up()
