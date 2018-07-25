@@ -30,6 +30,7 @@ import pdb
 import threading
 displayThread = threading.Condition()
 processorLock = threading.Condition()
+idxLock = threading.Condition()
 I_cache = 0
 I_idx = 0 # update idx
 outside_I = 0
@@ -276,6 +277,7 @@ class Camera(threading.Thread):
 		
 		t0 = time.time()
 		while True:
+			print('entering camera')
 			# time.sleep(0.5)
 			if self.t0 != 0:
 				t1 = time.time()
@@ -313,6 +315,8 @@ class Camera(threading.Thread):
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
 				print("camera capture frame rate: (gross speed)", perf, " fps")
+
+			print('exiting camera')
 
 		
 	def initialize_camera_ptg(self):
@@ -410,7 +414,7 @@ class Camera(threading.Thread):
 		self.im.Release()
 		# image_data = image.getNDArray()
 
-		# pdb.set_trace()
+		pdb.set_trace()
 
 		image_data = scipy.misc.imresize(image_data, 1/self.cfg['downscale'])
 		self.resolution = (
@@ -457,10 +461,13 @@ class Camera(threading.Thread):
 		# 	print("Time lapse (s): ", self.time_lapse)
 		# else:
 		# 	self.naive_idx()
-
+		
+		# IDX MARKER
+		idxLock.acquire()
 		self.naive_idx()
 		# self.decide_image()
 		self.I_cache[:,:,I_idx] = self.cache['gray']
+		idxLock.release()
 
 		# Lock the global variables, to updates those images
 		displayThread.acquire()
@@ -685,7 +692,7 @@ class PulseCamProcessorTF(threading.Thread):
 		global ending_key
 		t0 = time.time()
 		while True:
-			# print('Entering the while loop for PROCESSOR RUN')
+			print('Entering the while loop for PROCESSOR RUN')
 			# self.t0 = time.time()
 			# print('Entering the while loop')
 			# pdb.set_trace()
@@ -719,7 +726,7 @@ class PulseCamProcessorTF(threading.Thread):
 			if ending_key == 'r':
 				self.robust_mode = 'scanner_starter'
 			'''
-			# print('Halfway through.')
+			print('Halfway through.')
 			self.frames += 1
 			self.frames_track += 1
 			self.t.append(time.time()-t0)
@@ -731,7 +738,7 @@ class PulseCamProcessorTF(threading.Thread):
 				perf = (1.0*self.frames)/(t1-t0)
 				print("FT avg performance: (gross speed)", perf, " fps")
 
-			# print('Exiting the while loop for PROCESSOR RUN')
+			print('Exiting the while loop for PROCESSOR RUN')
 			
 	"""describes the computations (graph) to run later
 		-make all algorithmic changes here
@@ -1191,13 +1198,15 @@ class PulseCamProcessorTF(threading.Thread):
 		# 	# keep the correct sequence
 		# 	self.keep_sequence()
 		
+		displayThread.acquire()
 		self.swap_frames()
-
+		displayThread.release()		
+		
 		# pdb.set_trace()
 		
-		displayThread.acquire()
+		processorLock.acquire()
 		results = self.results
-		displayThread.release()		
+		processorLock.release()		
 		
 		return
 
@@ -1228,11 +1237,14 @@ class PulseCamProcessorTF(threading.Thread):
 			ending_key = 'c'
 
 			# swap the image pair
+			
 			tmp = I_cache[:,:,0]
 			I_cache[:,:,0] = I_cache[:,:,1]
 			I_cache[:,:,1] = I_cache[:,:,0]
+			idxLock.acquire()
 			I_idx = 1 - I_idx
-
+			idxLock.release()
+			
 	def robust_depth(self, old, new, conf, newf, conff):
 		# robustly find the correct depth map that is consistent with 
 		# the previous result
@@ -1696,10 +1708,9 @@ class Display(threading.Thread):
 		while True:
 			
 			self.t0 = time.time()
-			# displayThread.acquire()
-			# displayThread.wait()
+			
 			self.process()
-			# displayThread.release()
+		
 			self.iccv_output()
 			
 			'''
@@ -1767,9 +1778,9 @@ class Display(threading.Thread):
 		self.I_cache = I_cache
 		displayThread.release()
 		# self.outside_I = outside_I
-		displayThread.acquire()
+		processorLock.acquire()
 		self.results = results
-		displayThread.release()
+		processorLock.release()
 		return
 
 	def to_show(self):
@@ -2672,12 +2683,12 @@ def multithreading_test():
 	# b.run()	
 	# pdb.set_trace()	
 	b.start()
-	
+	'''
 	time.sleep(5)
 	d = Display(cfg[0:-1], cfgf)
 	print('display initialized')	
 	d.start()
-	
+	'''
 
 	# c.join()
 	a.join()
@@ -2685,8 +2696,8 @@ def multithreading_test():
 
 	
 	
-	time.sleep(5)
-	d.join()
+	# time.sleep(5)
+	# d.join()
 	
 
 	a.clean_up()
