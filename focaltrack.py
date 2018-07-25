@@ -29,8 +29,8 @@ import pdb
 #multithreading
 import threading
 displayThread = threading.Condition()
-processorLock = threading.Condition()
-idxLock = threading.Condition()
+# processorLock = threading.Condition()
+# idxLock = threading.Condition()
 I_cache = 0
 I_idx = 0 # update idx
 outside_I = 0
@@ -463,11 +463,11 @@ class Camera(threading.Thread):
 		# 	self.naive_idx()
 		
 		# IDX MARKER
-		idxLock.acquire()
+		displayThread.acquire()
 		self.naive_idx()
 		# self.decide_image()
 		self.I_cache[:,:,I_idx] = self.cache['gray']
-		idxLock.release()
+		displayThread.release()
 
 		# Lock the global variables, to updates those images
 		displayThread.acquire()
@@ -1204,9 +1204,9 @@ class PulseCamProcessorTF(threading.Thread):
 		
 		# pdb.set_trace()
 		
-		processorLock.acquire()
+		displayThread.acquire()
 		results = self.results
-		processorLock.release()		
+		displayThread.release()		
 		
 		return
 
@@ -1241,9 +1241,9 @@ class PulseCamProcessorTF(threading.Thread):
 			tmp = I_cache[:,:,0]
 			I_cache[:,:,0] = I_cache[:,:,1]
 			I_cache[:,:,1] = I_cache[:,:,0]
-			idxLock.acquire()
+			displayThread.acquire()
 			I_idx = 1 - I_idx
-			idxLock.release()
+			displayThread.release()
 			
 	def robust_depth(self, old, new, conf, newf, conff):
 		# robustly find the correct depth map that is consistent with 
@@ -1778,9 +1778,9 @@ class Display(threading.Thread):
 		self.I_cache = I_cache
 		displayThread.release()
 		# self.outside_I = outside_I
-		processorLock.acquire()
+		displayThread.acquire()
 		self.results = results
-		processorLock.release()
+		displayThread.release()
 		return
 
 	def to_show(self):
