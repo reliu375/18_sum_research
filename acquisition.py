@@ -227,7 +227,7 @@ def acquire_images(cam, nodemap, nodemap_tldevice):
 		# for i in range(NUM_IMAGES):
 		begin_time = time.time()
 		counter = 0
-		while(1):
+		while True:
 			try:
 				# Apply the trigger to capture the image.
 				# result &= grab_next_image_by_trigger(nodemap, cam)
