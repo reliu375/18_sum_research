@@ -716,6 +716,8 @@ class PulseCamProcessorTF(threading.Thread):
 		t0 = time.time()
 		while True:
 			
+			self.camera_process()
+
 			# print('Entering the while loop for PROCESSOR RUN')
 			# self.t0 = time.time()
 			# print('Entering the while loop')
@@ -1197,10 +1199,34 @@ class PulseCamProcessorTF(threading.Thread):
 
 		return 
 
+	def camera_process(self):
+		displayThread.acquire()
+		global image_result
+		global I_cache
+
+		I_cache_raw = image_result.GetNDArray()
+
+		I_cache_raw = scipy.misc.imresize(I_cache_raw, 1/self.cfg['downscale'])
+
+		if len(I_cache_raw.shape) > 2:
+			I_cache_gray = cv2.cvtColor(I_cache, cv2.COLOR_BGR2GRAY)
+		else:
+			I_cache_gray = I_cache.copy()
+
+		self.input_dict[self.I_in] = deepcopy(I_cache_gray)
+
+		cv2.imshow(self.input_dict[self.I_in])
+
+		displayThread.release()
+		return
+
 	"""imports a frame into """
 	def process(self):
 		global results
 		# print('1190 results')
+		# Process the image from the Camera class
+
+
 		# input the data
 		# displayThread.acquire()
 		# self.input_dict[self.I_in] = deepcopy(I_cache)
