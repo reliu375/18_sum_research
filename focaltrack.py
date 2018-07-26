@@ -14,6 +14,7 @@ import math
 import copy
 import PySpin as ps
 import pdb
+from copy import deepcopy
 
 from utils import *
 import time
@@ -277,7 +278,7 @@ class Camera(threading.Thread):
 		
 		t0 = time.time()
 		while True:
-			print('entering camera')
+			# print('entering camera')
 			# time.sleep(0.5)
 			if self.t0 != 0:
 				t1 = time.time()
@@ -316,7 +317,7 @@ class Camera(threading.Thread):
 				perf = (1.0*self.frames)/(t1-t0)
 				print("camera capture frame rate: (gross speed)", perf, " fps")
 
-			print('exiting camera')
+			# print('exiting camera')
 
 		
 	def initialize_camera_ptg(self):
@@ -465,13 +466,14 @@ class Camera(threading.Thread):
 		# IDX MARKER
 		displayThread.acquire()
 		self.naive_idx()
+		# displayThread.release()		
 		# self.decide_image()
 		self.I_cache[:,:,I_idx] = self.cache['gray']
-		displayThread.release()
+		
 
 		# Lock the global variables, to updates those images
-		displayThread.acquire()
-		I_cache = self.I_cache
+		# displayThread.acquire()
+		I_cache = deepcopy(self.I_cache)
 		displayThread.release()
 
 		self.frames += 1			
@@ -692,7 +694,7 @@ class PulseCamProcessorTF(threading.Thread):
 		global ending_key
 		t0 = time.time()
 		while True:
-			print('Entering the while loop for PROCESSOR RUN')
+			# print('Entering the while loop for PROCESSOR RUN')
 			# self.t0 = time.time()
 			# print('Entering the while loop')
 			# pdb.set_trace()
@@ -726,7 +728,7 @@ class PulseCamProcessorTF(threading.Thread):
 			if ending_key == 'r':
 				self.robust_mode = 'scanner_starter'
 			'''
-			print('Halfway through.')
+			# print('Halfway through.')
 			self.frames += 1
 			self.frames_track += 1
 			self.t.append(time.time()-t0)
@@ -738,7 +740,7 @@ class PulseCamProcessorTF(threading.Thread):
 				perf = (1.0*self.frames)/(t1-t0)
 				print("FT avg performance: (gross speed)", perf, " fps")
 
-			print('Exiting the while loop for PROCESSOR RUN')
+			# print('Exiting the while loop for PROCESSOR RUN')
 			
 	"""describes the computations (graph) to run later
 		-make all algorithmic changes here
@@ -1337,6 +1339,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 		# follow the function
 		eval('self.'+self.robust_mode+'()')
+		
 		robust_mode = self.robust_mode
 
 		return
@@ -1776,9 +1779,7 @@ class Display(threading.Thread):
 	def process(self):
 		displayThread.acquire()
 		self.I_cache = I_cache
-		displayThread.release()
 		# self.outside_I = outside_I
-		displayThread.acquire()
 		self.results = results
 		displayThread.release()
 		return
@@ -2648,11 +2649,6 @@ class Display(threading.Thread):
 def multithreading_test():
 	# c = OutsideCamera()
 	a = Camera()
-
-	# c.start()
-	a.start()
-
-	time.sleep(2)
 	
 	# initialize the pulsecam processor
 	# cfg_file = "./opt_results/pyConfLensFlowNetFast/"+\
@@ -2682,13 +2678,22 @@ def multithreading_test():
 	print('initialized TF processor')
 	# b.run()	
 	# pdb.set_trace()	
-	b.start()
-	'''
-	time.sleep(5)
+	
+	
+	# time.sleep(5)
 	d = Display(cfg[0:-1], cfgf)
 	print('display initialized')	
+	
+	
+
+	# c.start()
+	a.start()
+
+	time.sleep(2)
+
+	b.start()
+	time.sleep(5)
 	d.start()
-	'''
 
 	# c.join()
 	a.join()
@@ -2696,8 +2701,8 @@ def multithreading_test():
 
 	
 	
-	# time.sleep(5)
-	# d.join()
+	time.sleep(5)
+	d.join()
 	
 
 	a.clean_up()
