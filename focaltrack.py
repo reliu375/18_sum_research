@@ -1239,11 +1239,10 @@ class PulseCamProcessorTF(threading.Thread):
 			ending_key = 'c'
 
 			# swap the image pair
-			
+			displayThread.acquire()
 			tmp = I_cache[:,:,0]
 			I_cache[:,:,0] = I_cache[:,:,1]
 			I_cache[:,:,1] = I_cache[:,:,0]
-			displayThread.acquire()
 			I_idx = 1 - I_idx
 			displayThread.release()
 			
@@ -1271,10 +1270,12 @@ class PulseCamProcessorTF(threading.Thread):
 		confs = [conf, conff]
 		if np.argmin(err) == 2:
 			# swap the image pair
+			displayThread.acquire()
 			tmp = I_cache[:,:,0]
 			I_cache[:,:,0] = I_cache[:,:,1]
 			I_cache[:,:,1] = I_cache[:,:,0]
 			I_idx = 1 - I_idx
+			displayTHread.release()
 		return depth[np.argmin(err)],confs[np.argmin(err)],\
 			depth[np.argmax(err)],confs[np.argmax(err)]
 
@@ -1317,7 +1318,8 @@ class PulseCamProcessorTF(threading.Thread):
 		# if self.robust_mode == 'nothing':
 		# 	# averaging confidence
 		# 	conff = self.results['conff']
-		# 	Zf = self.results['Zf']
+		# 	Zf = self.
+		results['Zf']
 
 		# 	# check number of high conf pixels
 		# 	self.Zf_high = Zf[np.where(conff > self.track_thre)]
