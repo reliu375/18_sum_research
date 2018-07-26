@@ -321,7 +321,7 @@ class Camera(threading.Thread):
 
 			# display frame rate in real time
 			self.frames += 1			
-			frame_num = 10			
+			frame_num = 1000			
 			if np.mod(self.frames,frame_num)==0:
 				t1 = time.time()
 				perf = (1.0*frame_num)/(t1-t0)
@@ -606,6 +606,18 @@ class PulseCamProcessorTF(threading.Thread):
 	def __init__(self, cfg, cfgf):
 		threading.Thread.__init__(self)
 		
+		self.cfg_cam = {
+			#processing configuration knobs
+			'wrapper': 'ptg', # Select the wrapper
+			'downscale': 2, #downscaling of the image
+			'camera' : 0, #the integer mapping to the camera you 
+			#want to use.  typically 0, but depends on what's available
+			'input_video' : None, #file name for a video file to 
+			#use for debugging.  Will just loop through.  Can also 
+			#use something like "path-to-images/%2d.tif" as the 
+			#input here, that will show through all the images 
+			#that match that string.
+		}
 		self.cfg = cfg
 		self.cfgf = cfgf
 		# resolution
@@ -715,7 +727,7 @@ class PulseCamProcessorTF(threading.Thread):
 		print('704 ending key')
 		t0 = time.time()
 		while True:
-			
+			# time.sleep(1)
 			self.camera_process()
 
 			# print('Entering the while loop for PROCESSOR RUN')
@@ -759,7 +771,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 			# display frame rate in real time
 			
-			frame_num = 100000			
+			frame_num = 10			
 			if np.mod(self.frames,frame_num)==0:
 				t1 = time.time()
 				perf = (1.0*frame_num)/(t1-t0)
@@ -1206,7 +1218,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 		I_cache_raw = image_result.GetNDArray()
 
-		I_cache_raw = scipy.misc.imresize(I_cache_raw, 1/self.cfg['downscale'])
+		I_cache_raw = scipy.misc.imresize(I_cache_raw, 1/self.cfg_cam['downscale'])
 
 		if len(I_cache_raw.shape) > 2:
 			I_cache_gray = cv2.cvtColor(I_cache, cv2.COLOR_BGR2GRAY)
@@ -1215,7 +1227,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 		self.input_dict[self.I_in] = deepcopy(I_cache_gray)
 
-		cv2.imshow(self.input_dict[self.I_in])
+		# cv2.imshow('Raw image', self.input_dict[self.I_in])
 
 		displayThread.release()
 		return
