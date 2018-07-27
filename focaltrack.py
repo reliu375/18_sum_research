@@ -38,7 +38,7 @@ outside_I = 0
 results = 0
 ending_key = 'c'
 robust_mode = 'scanner_starter'
-image_result = []
+image_result = [0,0]
 camera_resolution = []
 
 #the range for different outputs, range set to NaN means auto-ranging
@@ -270,12 +270,12 @@ class Camera(threading.Thread):
 
 		self.data_type = tf.float32
 
-		self.I_cache = np.zeros(self.resolution+(2,), dtype = np.uint8)
+		# self.I_cache = np.zeros(self.resolution+(2,), dtype = np.uint8)
 		self.time_lapse = 0
 
 		global I_cache
 		print('274 I_cache')
-		I_cache = deepcopy(self.I_cache)
+		# I_cache = deepcopy(self.I_cache)
 
 		print('The initialization process is complete.')
 
@@ -453,7 +453,7 @@ class Camera(threading.Thread):
 
 	def naive_idx(self):
 		global I_idx
-		print('445 I_idx')
+		# print('445 I_idx')
 		I_idx = 1 - I_idx
 		return
 
@@ -488,12 +488,12 @@ class Camera(threading.Thread):
 		# displayThread.release()		
 		# self.decide_image()
 		# print(self.cache['gray'].shape)
-		self.I_cache[:,:,I_idx] = self.cache['gray']
+		# self.I_cache[:,:,I_idx] = self.cache['gray']
 		
 
 		# Lock the global variables, to updates those images
 		# displayThread.acquire()
-		I_cache = deepcopy(self.I_cache)
+		# I_cache = deepcopy(self.I_cache)
 		displayThread.release()
 
 		self.frames += 1			
@@ -752,13 +752,13 @@ class PulseCamProcessorTF(threading.Thread):
 			# Acquire the condition lock and wait for its release
 			
 			# displayThread.wait()
-			# self.process()
+			self.process()
 			# print('Processing is complete. From Processor')
 			# pdb.set_trace()
 			# print('Robust track is complete.')
 			
 
-			# self.robust_track_Z()
+			self.robust_track_Z()
 			'''
 			# obtain the input
 			# print('Is there a timer issue?')
@@ -785,7 +785,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 			# display frame rate in real time
 			
-			frame_num = 10			
+			frame_num = 100			
 			if np.mod(self.frames,frame_num)==0:
 				t1 = time.time()
 				perf = (1.0*frame_num)/(t1-t0)
@@ -1226,25 +1226,38 @@ class PulseCamProcessorTF(threading.Thread):
 		return 
 
 	def camera_process(self):
-		displayThread.acquire()
 		global image_result
 		# global I_cache
+		
 		for j in range(2):
-			self.cache[:,:,j] = image_result[j].GetNDArray()
+			displayThread.acquire()
+			raw = image_result[j].GetNDArray()
+			# cv2.imshow('image', raw)
+			# cv2.waitKey(0)
+			displayThread.release()
+			raw = scipy.misc.imresize(raw, 1/self.cfg_cam['downscale'])
 
-			self.cache[:,:,j] = scipy.misc.imresize(self.cache[:,:,j], 1/self.cfg_cam['downscale'])
+			if len(raw.shape) > 2:
+				raw = cv2.cvtColor(raw, cv2.COLOR_BGR2GRAY)
+			
+			self.cache[:,:,j] = deepcopy(raw)
 
-			if len(I_cache_raw.shape) > 2:
-				self.cache[:,:,j] = cv2.cvtColor(self.cache[:,:,j], cv2.COLOR_BGR2GRAY)
+			
+			# self.cache[:,:,j] = image_result[j].GetNDArray()
+
+			# self.cache[:,:,j] = scipy.misc.imresize(self.cache[:,:,j], 1/self.cfg_cam['downscale'])
+
+			# if len(I_cache_raw.shape) > 2:
+				# self.cache[:,:,j] = cv2.cvtColor(self.cache[:,:,j], cv2.COLOR_BGR2GRAY)
 			
 
 		# self.cache[:,:,]
 
-		self.input_dict[self.I_in] = deepcopy(self.cache)
+		self.input_dict[self.I_in] = copy.copy(self.cache)
 
 		# cv2.imshow('Raw image', self.input_dict[self.I_in])
-
-		displayThread.release()
+		# cv2.destroyAllWindows()
+		# displayThread.release()
 		return
 
 	"""imports a frame into """
@@ -1264,7 +1277,7 @@ class PulseCamProcessorTF(threading.Thread):
 		self.input_dict[self.a1_in] = self.cfg[0]['a1']
 		self.input_dict[self.offset_in] = self.offset
 
-		"""print('run1')
+		# print('run1')
 		self.session.run(self.input_data, self.input_dict)
 
 		# run it
@@ -1274,24 +1287,24 @@ class PulseCamProcessorTF(threading.Thread):
 		for k in self.image_to_show:
 			res_dict[k] = self.vars_fuse[k]
 		
-		print('run2')
+		# print('run2')
 		self.results = self.session.run(res_dict)
-		"""
-		self.results = []
+		
+		# self.results = []
 
 		# if self.robust_mode == 'tracker':
 		# 	# keep the correct sequence
 		# 	self.keep_sequence()
 		
 		# print('swap')
-		# self.swap_frames()		
+		self.swap_frames()		
 		
 		# pdb.set_trace()
 		
 		# print('deepcopy')
-		# displayThread.acquire()
-		# results = deepcopy(self.results)
-		# displayThread.release()		
+		displayThread.acquire()
+		results = deepcopy(self.results)
+		displayThread.release()		
 		
 		return
 
@@ -1316,7 +1329,7 @@ class PulseCamProcessorTF(threading.Thread):
 		global I_cache
 		global ending_key
 		global I_idx
-		print('1245 ending key')
+		# print('1245 ending key')
 		if ending_key == 's':
 			# for i in range(len(self.old_data['Z'])):
 			# 	self.old_data['Z'][i] = self.results['Zf']
@@ -1365,7 +1378,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 	def robust_track_Z(self):
 		global robust_mode
-		print('1293 ending key')
+		# print('1293 ending key')
 		# crop out high confidence regions
 		self.track_thre = 0.9
 
@@ -1532,7 +1545,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 	def tracker(self):
 		global ending_key
-		print('1457 ending key')
+		# print('1457 ending key')
 		# eval('self.'+self.track_methods[self.track_idx]+'()')
 		if not self.is_object():
 			# if lose the object, change back to scanner 
@@ -2774,8 +2787,8 @@ def multithreading_test():
 	
 	
 	# time.sleep(5)
-	# d = Display(cfg[0:-1], cfgf)
-	# print('display initialized')	
+	d = Display(cfg[0:-1], cfgf)
+	print('display initialized')	
 	
 	
 
@@ -2785,8 +2798,8 @@ def multithreading_test():
 	time.sleep(2)
 
 	b.start()
-	# time.sleep(5)
-	# d.start()
+	time.sleep(5)
+	d.start()
 
 	# c.join()
 	a.join()
@@ -2794,8 +2807,8 @@ def multithreading_test():
 
 	
 	
-	# time.sleep(5)
-	# d.join()
+	time.sleep(5)
+	d.join()
 	
 
 	a.clean_up()
