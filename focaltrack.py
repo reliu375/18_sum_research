@@ -287,7 +287,7 @@ class Camera(threading.Thread):
 		t0 = time.time()
 		while True:
 			# print('entering camera')
-			# time.sleep(0.5)
+			# time.sleep(0.005)
 			if self.t0 != 0:
 				t1 = time.time()
 				self.time_lapse = t1 - self.t0
@@ -1337,7 +1337,7 @@ class PulseCamProcessorTF(threading.Thread):
 			# 	self.old_data['Z'][i] = self.results['Zf']
 			displayThread.acquire()
 			ending_key = 'c'
-
+			print('Triggered')
 			# swap the image pair
 			tmp = I_cache[:,:,0]
 			I_cache[:,:,0] = I_cache[:,:,1]
@@ -1816,16 +1816,16 @@ class Display(threading.Thread):
 		# pdb.set_trace()
 		while True:
 			# print('Entering display loop')
-			pdb.set_trace()
+			# pdb.set_trace()
 			self.t0 = time.time()
-			
+			# time.sleep(0.05)
 			self.process()
 		
-			self.iccv_output()
+			# self.iccv_output()
 
-			c = cv2.waitKey(1) & 0xFF
+			# c = cv2.waitKey(1) & 0xFF
 			
-			'''
+			
 			# print('Everything before this point of the while loop is properly run.')
 			
 			# print('Is there a timer problem?')
@@ -1839,14 +1839,15 @@ class Display(threading.Thread):
 			# print('Display threads are working right now.')
 			
 			if c != 255 and c != -1:
-				print(c)
+				# print(c)
 				ending_key = chr(c).lower()
-				print('The if statement is evaluated to be true. The end key is set to c.')
+				# print('The if statement is evaluated to be true. The end key is set to c.')
 			
 			# quit
 			if ending_key == 'q':
 				print("quitting")
 				self.final_statistics()
+				cv2.destroyAllWindows()
 				break
 			# capture the data
 			if ending_key == '\n':
@@ -1872,7 +1873,7 @@ class Display(threading.Thread):
 				self.show_mode += 1 
 				self.show_mode = np.mod(self.show_mode, len(self.show_modes))
 				ending_key = 'c'
-			'''
+			
 			self.frames += 1
 			self.t.append(time.time()-self.t0)
 
