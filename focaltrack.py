@@ -1227,7 +1227,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 	def camera_process(self):
 		global image_result
-		# global I_cache
+		global I_cache
 		
 		for j in range(2):
 			displayThread.acquire()
@@ -1252,7 +1252,9 @@ class PulseCamProcessorTF(threading.Thread):
 			
 
 		# self.cache[:,:,]
-
+		displayThread.acquire()
+		I_cache = deepcopy(self.cache)
+		displayThread.release()
 		self.input_dict[self.I_in] = copy.copy(self.cache)
 
 		# cv2.imshow('Raw image', self.input_dict[self.I_in])
@@ -1465,7 +1467,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 	def scanner_iter(self):
 		global ending_key
-		print('1377 ending key')
+		# print('1377 ending key')
 		pix_num = self.Z_high.flatten().shape[0]
 		if self.is_object():
 			if pix_num > self.max_pix:
@@ -1813,7 +1815,8 @@ class Display(threading.Thread):
 		# print('The window is opened now')
 		# pdb.set_trace()
 		while True:
-			print('Entering display loop')
+			# print('Entering display loop')
+			pdb.set_trace()
 			self.t0 = time.time()
 			
 			self.process()
@@ -1881,7 +1884,7 @@ class Display(threading.Thread):
 				perf = (1.0*self.frames)/(t1-t0)
 				print("display frame rate: (gross speed)", perf, " fps")
 			
-			print('Exiting the while loop for DISPLAY RUN')
+			# print('Exiting the while loop for DISPLAY RUN')
 	def process(self):
 		displayThread.acquire()
 		self.I_cache = deepcopy(I_cache)
