@@ -38,7 +38,8 @@ outside_I = 0
 results = 0
 ending_key = 'c'
 robust_mode = 'scanner_starter'
-image_result = 0
+image_result = []
+camera_resolution = []
 
 #the range for different outputs, range set to NaN means auto-ranging
 DEPTH_RANGE = [-1.0,-0.3]#[-1.0,-0.3] # -1.0,-0.5
@@ -248,6 +249,7 @@ class Camera(threading.Thread):
 		self.vars = {}
 		self.frames = 0
 		self.resolution = None
+		self.raw_image = None
 		self.system = ps.System.GetInstance()
 		self.cam_list = self.system.GetCameras()
 		
@@ -363,7 +365,8 @@ class Camera(threading.Thread):
 		self.cfg['camera_fps'] = p['abs_value']	
 
 	def initialize_camera_spinnaker(self):
-	
+		global camera_resolution
+
 		#Get current library version
 		version = self.system.GetLibraryVersion()
 		print('Library version: %d.%d.%d.%d' % (version.major, version.minor, version.type, version.build))
@@ -426,12 +429,15 @@ class Camera(threading.Thread):
 		self.im.Release()
 		# image_data = image.getNDArray()
 
-		pdb.set_trace()
+		# pdb.set_trace()
 
 		image_data = scipy.misc.imresize(image_data, 1/self.cfg['downscale'])
-		self.resolution = (
+
+		displayThread.acquire()
+		camera_resolution = (
 			image_data.shape[0],image_data.shape[1]
 		)
+		displayThread.release()
 		# self.cfg['camera_fps'] = p['abs_value']
 
 		print('The camera is set up successfully')
@@ -527,10 +533,12 @@ class Camera(threading.Thread):
 
 	def grab_frame_and_process_spinnaker(self):
 		global image_result
+		global I_idx
 		# Grab the next image and convert it to a numpy array.
 		# print('Is there a segmentation fault?')
 		displayThread.acquire()
-		image_result = self.cam.GetNextImage()
+		self.naive_idx()
+		image_result[I_idx] = self.cam.GetNextImage()
 		displayThread.release()
 		# image_data = image_result.GetNDArray()
 		
@@ -604,6 +612,7 @@ class Camera(threading.Thread):
 class PulseCamProcessorTF(threading.Thread):
 	"""constructor: initializes FocalFlowProcessor"""
 	def __init__(self, cfg, cfgf):
+		global camera_resolution
 		threading.Thread.__init__(self)
 		
 		self.cfg_cam = {
@@ -621,6 +630,7 @@ class PulseCamProcessorTF(threading.Thread):
 		self.cfg = cfg
 		self.cfgf = cfgf
 		# resolution
+		self.camera_resolution = None
 		self.resolution = []
 		for i in range(len(self.cfg)):
 			self.resolution.append(
@@ -656,7 +666,11 @@ class PulseCamProcessorTF(threading.Thread):
 
 		self.t = []
 		self.draw = None
-		self.cache = {}
+
+		displayThread.acquire()
+		self.cache = np.zeros(camera_resolution + (2,), dtype = np.uint8)
+		displayThread.release()
+
 		self.vars = []
 		self.frames = 0
 		self.frames_track = 0
@@ -1214,18 +1228,19 @@ class PulseCamProcessorTF(threading.Thread):
 	def camera_process(self):
 		displayThread.acquire()
 		global image_result
-		global I_cache
+		# global I_cache
+		for j in range(2):
+			self.cache[:,:,j] = image_result[j].GetNDArray()
 
-		I_cache_raw = image_result.GetNDArray()
+			self.cache[:,:,j] = scipy.misc.imresize(self.cache[:,:,j], 1/self.cfg_cam['downscale'])
 
-		I_cache_raw = scipy.misc.imresize(I_cache_raw, 1/self.cfg_cam['downscale'])
+			if len(I_cache_raw.shape) > 2:
+				self.cache[:,:,j] = cv2.cvtColor(self.cache[:,:,j], cv2.COLOR_BGR2GRAY)
+			
 
-		if len(I_cache_raw.shape) > 2:
-			I_cache_gray = cv2.cvtColor(I_cache, cv2.COLOR_BGR2GRAY)
-		else:
-			I_cache_gray = I_cache.copy()
+		# self.cache[:,:,]
 
-		self.input_dict[self.I_in] = deepcopy(I_cache_gray)
+		self.input_dict[self.I_in] = deepcopy(self.cache)
 
 		# cv2.imshow('Raw image', self.input_dict[self.I_in])
 
