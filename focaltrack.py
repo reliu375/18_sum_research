@@ -733,6 +733,9 @@ class PulseCamProcessorTF(threading.Thread):
 		self.depth_data = {}
 		self.show_modes = ['origin', 'partial BFS', 'full BFS']
 		self.show_mode = 0
+
+		self.track_count = 0
+		self.track_num = 50
 		
 		# make a video recorder
 		self.build_graph()
@@ -1745,6 +1748,17 @@ class PulseCamProcessorTF(threading.Thread):
 
 
 		return Z_rgb.astype(np.float32)/255
+
+	def to_show(self):
+		if robust_mode == 'tracker':
+			self.track_count += 1
+		else:
+			self.track_count = 0
+
+		if self.track_count > self.track_num:
+			return True
+		else:
+			return False
 
 	def scanner_starter(self):
 		# initialize the scanner
