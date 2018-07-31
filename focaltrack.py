@@ -729,6 +729,10 @@ class PulseCamProcessorTF(threading.Thread):
 		self.old_idx = 0
 		self.old_data['Z'] = [[] for i in range(self.old_num)]
 		self.old_data['conf'] = [[] for i in range(self.old_num)]
+
+		self.depth_data = {}
+		self.show_modes = ['origin', 'partial BFS', 'full BFS']
+		self.show_mode = 0
 		
 		# make a video recorder
 		self.build_graph()
@@ -1255,7 +1259,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 		# self.cache[:,:,]
 		displayThread.acquire()
-		I_cache = deepcopy(self.cache)
+		self.I_cache = deepcopy(self.cache)
 		displayThread.release()
 		self.input_dict[self.I_in] = copy.copy(self.cache)
 
@@ -1309,6 +1313,8 @@ class PulseCamProcessorTF(threading.Thread):
 		displayThread.acquire()
 		results = deepcopy(self.results)
 		displayThread.release()		
+
+		self.iccv_output()
 		
 		return
 
@@ -1448,6 +1454,297 @@ class PulseCamProcessorTF(threading.Thread):
 		displayThread.release()
 		
 		return
+
+	def iccv_output(self):
+		self.depth_data['Z'] = copy.deepcopy(self.results['Z'])
+		self.depth_data['conf'] = copy.deepcopy(self.results['conf'])
+
+		if self.to_show():
+			conf_thre = 0.999
+		else:
+			conf_thre = 1
+
+		self.results['I_0'] = self.I_cache[;,;,1].astype(np.float32)
+		self.results['I_1'] = self.I_cache[;,;,1].astype(np.float32)
+
+		# backup the data
+		self.depth_data['I_0'] = self.results['I_0']
+		self.depth_data['I_1'] = self.results['I_1']
+
+		self.valid_region_I()
+
+		if self.show_modes[self.show_mode] == 'origin':
+			Z_f = self.cfgf[0]['a1']
+			flag = np.where(\
+					(np.abs(self.results['Zf']) - np.abs(Z_f)) > 0.5*Z_f
+				)
+			self.results['Zf'][flag] = -1e10
+			self.results['conf'][flag] = -1e10
+
+			# too close than Z_f
+			flag = np.where(\
+					(np.abs(self.results['Zf']) - np.abs(Z_f)) < -0.5*Z_f
+				)
+			self.results['Zf'][flag] = -1e10
+			self.results['conf'][flag] = -1e10
+
+			# confidence smaller than the threshold
+			flag = np.where(\
+					self.results['conf']<0.999
+				)
+			self.results['Zf'][flag] = -1e10
+			self.results['conf'][flag] = -1e10
+
+
+			# saturated region
+			I = (self.results['I_0']+self.results['I_1'])/2
+			flag = np.where(\
+					I > 250
+				)
+			self.results['Zf'][flag] = -1e10
+			self.results['conf'][flag] = -1e10
+
+			self.results['Zf'] = self.bilateral(\
+				self.results['I_0'],\
+				self.results['Zf'], \
+				self.results['conf']\
+			)
+		elif self.show_modes[self.show_mode] == 'partial BFS':
+			Z_f = self.cfgf[0]['a1']
+			flag = np.where(\
+					(np.abs(self.results['Zf']) - np.abs(Z_f)) > 0.5*Z_f
+				)
+			self.results['Zf'][flag] = -1e10
+			self.results['conf'][flag] = -1e10
+
+			# too close than Z_f
+			flag = np.where(\
+					(np.abs(self.results['Zf']) - np.abs(Z_f)) < -0.5*Z_f
+				)
+			self.results['Zf'][flag] = -1e10
+			self.results['conf'][flag] = -1e10
+
+			# confidence smaller than the threshold
+			flag = np.where(\
+					self.results['conf']<0.999
+				)
+			self.results['Zf'][flag] = -1e10
+			self.results['conf'][flag] = -1e10
+
+
+			# saturated region
+			I = (self.results['I_0']+self.results['I_1'])/2
+			flag = np.where(\
+					I > 250
+				)
+			self.results['Zf'][flag] = -1e10
+			self.results['conf'][flag] = -1e10
+
+			# try the fast bilateral solver
+			grid_params = {
+			    'sigma_luma' : 10,
+			    'sigma_chroma': 10,
+			    'sigma_spatial': 3
+			}
+
+			I = np.stack([self.results['I_0'] for i in range(3)], -1)
+			Z = self.results['Zf']
+			C = self.results['conf']
+			C = 1/(1-C)
+			grid = BilateralGrid(I, **grid_params)
+
+			t = Z.reshape(-1, 1).astype(np.float32) #/ (pow(2,16)-1)
+			c = C.reshape(-1, 1).astype(np.float32) #/ (pow(2,16)-1)
+			tc_filt = grid.filter(t * c)
+			c_filt = grid.filter(c)
+			output = (tc_filt / c_filt).reshape(self.results['Zf'].shape)
+			self.results['Zf'] = output
+
+			t = C.reshape(-1, 1).astype(np.float32)
+			tc_filt = grid.filter(t * c)
+			output = (tc_filt / c_filt).reshape(self.results['conf'].shape)
+			output = 1-1/output
+			self.results['conf'] = output
+		elif self.show_modes[self.show_mode] == 'full BFS':
+			# try the fast bilateral solver
+			grid_params = {
+			    'sigma_luma' : 10,
+			    'sigma_chroma': 10,
+			    'sigma_spatial': 3
+			}
+
+			I = np.stack([self.results['I_0'] for i in range(3)], -1)
+			Z = self.results['Zf']
+			C = self.results['conf']
+			C = 1/(1-C)
+			grid = BilateralGrid(I, **grid_params)
+
+			t = Z.reshape(-1, 1).astype(np.float32) #/ (pow(2,16)-1)
+			c = C.reshape(-1, 1).astype(np.float32) #/ (pow(2,16)-1)
+			tc_filt = grid.filter(t * c)
+			c_filt = grid.filter(c)
+			output = (tc_filt / c_filt).reshape(self.results['Zf'].shape)
+			self.results['Zf'] = output
+
+		# Swap the left and right
+		self.results['Zf'] = self.results['Zf'][:,::-1]
+		self.results['I_0'] = self.results['I_0'][:,::-1]
+		self.results['conf'] = self.results['conf'][:,::-1]
+
+		Z = self.pseudo_color_Z(\
+			self.results['Zf'],\
+			self.results['conf'],\
+			DEPTH_RANGE_f[0],\
+			DEPTH_RANGE_f[1],\
+			conf_thre
+		)
+
+		# create the image to draw
+		# Z = self.prep_for_draw_demo(I = self.results['I_0'], message='Depth', rng=KEY_RANGE['raw'])
+		# I = self.prep_for_draw_demo(I = np.abs(self.results['u_2']/self.results['I_0'])*500, message='Input image', rng=KEY_RANGE['raw'])
+		Z = self.prep_for_draw_demo(I = Z, message='Depth', rng=KEY_RANGE['raw'])
+		I = self.prep_for_draw_demo(I = self.results['I_0'], message='Input image', rng=KEY_RANGE['raw'])
+		
+		self.cache['draw'] = np.concatenate((I,Z), axis=1)
+		
+		# new shape
+		ncol = I.shape[1] + Z.shape[1]
+
+		# in-focus plane
+		flegend = np.zeros((20, ncol), dtype=np.float32)
+		fplane = np.zeros((10, ncol), dtype=np.float32)
+		Z_f = self.cfgf[0]['a1']
+		# print(Z_f)
+		loc = int((Z_f + DEPTH_RANGE_f[1])/(DEPTH_RANGE_f[1]-DEPTH_RANGE_f[0])*ncol)
+		loc = np.maximum(loc, 0)
+		fplane[:, loc-2:loc+2] = 1
+		fplane = self.prep_for_draw_demo(I = fplane, rng=[0,1])
+		flegend = self.prep_for_draw_demo(I = flegend, rng=[0,1])
+		
+		t_s = 0.5
+		t_h = int(20*t_s)
+		flegend = cv2.putText(\
+			flegend, \
+			"Mean Depth", \
+			(loc-45,t_h+3), \
+			FONT, \
+			t_s, \
+			(1,1,1)\
+		)
+
+		# make a color bar
+		cbar_row = 10
+		seg = 100
+		# color bar
+		cbar = np.matlib.repmat(np.linspace(100,0,num=seg), cbar_row, 1)
+		# pseudo confidence
+		cpseudo = np.ones((cbar_row, seg))
+		# give the pseudo color
+		cbar = (self.pseudo_color_Z(cbar, cpseudo, 0, 100, 0) * 255).astype(np.uint8)
+		cbar = scipy.misc.imresize(cbar, (cbar_row, ncol)).astype(np.float32)/255
+
+		nums = np.linspace(-DEPTH_RANGE_f[1],-DEPTH_RANGE_f[0],9)
+		for i in range(nums.shape[0]-1):
+			loc = int(ncol / (nums.shape[0]-1) * i)
+			cbar[-6::,loc,0] = 0
+			cbar[-6::,loc,1] = 0
+			cbar[-6::,loc,2] = 0
+
+		# make the number bar
+		nbar = np.zeros((30, cbar.shape[1]),dtype=np.float32)
+		nbar = self.prep_for_draw_demo(I = nbar, rng=[0,100])
+		t_s = 0.5
+		t_h = int(20*t_s)
+		nbar = cv2.putText(\
+			nbar, \
+			"Depth(m)",\
+			(0, t_h+5), \
+			FONT, \
+			t_s, \
+			(1,1,1)\
+		)
+		for i in range(nums.shape[0]-2):
+			loc = int(ncol / (nums.shape[0]-1) * (i+1))
+			nbar = cv2.putText(\
+				nbar, \
+				str(nums[i+1]), \
+				(loc-13, t_h+5), \
+				FONT, \
+				t_s, \
+				(1,1,1)\
+			)
+
+		# # outside color 
+		# I_o = scipy.misc.imresize(self.outside_I, \
+		# 	(int(ncol/self.outside_I.shape[1]*self.outside_I.shape[0]), ncol))
+		# I_o = self.prep_for_draw_demo(I = I_o, rng=KEY_RANGE['raw'])
+
+		# self.cache['draw'] = np.concatenate((I_o,flegend, fplane, cbar, nbar, self.cache['draw']),axis=0)
+
+		self.cache['draw'] = np.concatenate((flegend, fplane, cbar, nbar, self.cache['draw']),axis=0)
+
+		displayThread.acquire()
+		cv2.imshow("Focal Track Demo", self.cache['draw'])
+		displayThread.release()
+
+		# self.t.append(time.time()-self.t0)
+		
+		# print('The iccv_output function is executed successfully.')
+
+	def valid_region_I(self):
+		vars_to_cut = [\
+			'u_2','I_0','I_1'\
+		]
+
+		rows_cut = int(\
+			((self.cfg[-1]['gauss'].shape[0]-1)/2+\
+			(self.cfg[-1]['ext_f'].shape[1]-1)/2)*\
+			self.resolution[0][0]/self.resolution[-1][0]
+		)
+		cols_cut = int(\
+			((self.cfg[-1]['gauss'].shape[1]-1)/2+\
+			(self.cfg[-1]['ext_f'].shape[2]-1)/2)*\
+			self.resolution[0][1]/self.resolution[-1][1]
+		)
+
+		rows = self.cfg[0]['szx_sensor']
+		cols = self.cfg[0]['szy_sensor']
+
+		for var in vars_to_cut:
+			self.results[var] = \
+				self.results[var][
+					cols_cut:cols-cols_cut,
+					rows_cut:rows-rows_cut
+				]
+
+	def pseudo_color_Z(self, Z, conf, lo, hi, conf_thre):
+		print('entering pseudo Z')
+		# cut out the region
+		Z[np.where(conf <= conf_thre)] = lo
+		Z[np.where(Z<lo)] = lo
+		Z[np.where(Z>hi)] = hi
+
+		# Z[np.where(conf <= conf_thre)] = -1e10
+		# Z[np.where(Z<lo)] = -1e10
+		# Z[np.where(Z>hi)] = -1e10
+		print('okay')
+		# convert to pseudo color
+		Z_g = (Z-lo)/(hi-lo)*255
+		Z_g = Z_g.astype(np.uint8)
+		Z_rgb = cv2.applyColorMap(Z_g, cv2.COLORMAP_JET)
+
+		idx = np.where(conf <= conf_thre) or\
+			np.where(Z <= lo) or\
+			np.where(Z >= hi)
+
+		# pdb.set_trace()
+
+		Z_rgb[:,:,0][idx] = 0
+		Z_rgb[:,:,1][idx] = 0
+		Z_rgb[:,:,2][idx] = 0
+
+
+		return Z_rgb.astype(np.float32)/255
 
 	def scanner_starter(self):
 		# initialize the scanner
