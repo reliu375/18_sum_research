@@ -234,6 +234,7 @@ def acquire_images(cam, nodemap, nodemap_tldevice):
 				
 				
 				# Retrieve next received image.
+				# pdb.set_trace()
 				image_result = cam.GetNextImage()
 
 				# Check for image completion:
@@ -245,7 +246,8 @@ def acquire_images(cam, nodemap, nodemap_tldevice):
 				#	width = image_result.GetWidth()
 				#	height = image_result.GetHeight()
 				#	print('Grabbed Image, width = %d, height = %d' % (width, height))
-
+				
+				# pdb.set_trace()
 				# Getting the image data as a numpy array
 				image_data = image_result.GetNDArray()
 

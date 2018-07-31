@@ -1232,11 +1232,13 @@ class PulseCamProcessorTF(threading.Thread):
 		for j in range(2):
 			displayThread.acquire()
 			raw = image_result[j].GetNDArray()
+			# print(numpy.shape(raw))
 			# cv2.imshow('image', raw)
 			# cv2.waitKey(0)
 			displayThread.release()
 			raw = scipy.misc.imresize(raw, 1/self.cfg_cam['downscale'])
-
+			# print(numpy.shape(raw))
+			# pdb.set_trace()
 			if len(raw.shape) > 2:
 				raw = cv2.cvtColor(raw, cv2.COLOR_BGR2GRAY)
 			
@@ -1821,7 +1823,7 @@ class Display(threading.Thread):
 			# time.sleep(0.05)
 			self.process()
 		
-			# self.iccv_output()
+			self.iccv_output()
 
 			# c = cv2.waitKey(1) & 0xFF
 			
@@ -2136,21 +2138,23 @@ class Display(threading.Thread):
 		
 		# print('I wonder if we actually entered this function.')
 		# pdb.set_trace()
-		self.depth_data['Zf'] = copy.deepcopy(self.results['Zf'])
+		displayThread.acquire()
+		self.depth_data['Zf'] = copy.deepcopy(results['Zf'])
 		# pdb.set_trace()
-		self.depth_data['conff'] = copy.deepcopy(self.results['conf'])
+		self.depth_data['conff'] = copy.deepcopy(results['conf'])
+		displayThread.release()
 
 		if self.to_show():
 			conf_thre = 0
 		else:
 			conf_thre = 0
-
+		
 		# displayThread.acquire()
 		# print("DEPTH_RANGE", DEPTH_RANGE)
 		self.results['I_0'] = self.I_cache[:,:,1].astype(np.float32)
 		self.results['I_1'] = self.I_cache[:,:,1].astype(np.float32)
 		# displayThread.release()
-
+		
 		# backup the data for saving
 		self.depth_data['I_0'] = self.results['I_0']
 		self.depth_data['I_1'] = self.results['I_1']
@@ -2181,6 +2185,9 @@ class Display(threading.Thread):
 
 		# cut out things that are not correct
 		# too far away from Z_f
+
+		# print(self.show_modes[self.show_mode])
+		
 		if self.show_modes[self.show_mode] == 'origin':
 			Z_f = self.cfgf[0]['a1']
 			flag = np.where(\
@@ -2308,12 +2315,12 @@ class Display(threading.Thread):
 		# )
 
 		
-
+		
 		# swap the left and right
 		self.results['Zf'] = self.results['Zf'][:,::-1]
 		self.results['I_0'] = self.results['I_0'][:,::-1]
 		self.results['conf'] = self.results['conf'][:,::-1]
-
+		
 		Z = self.pseudo_color_Z(\
 			self.results['Zf'],\
 			self.results['conf'],\
@@ -2321,7 +2328,7 @@ class Display(threading.Thread):
 			DEPTH_RANGE_f[1],\
 			conf_thre
 		)
-
+		'''
 		# create the image to draw
 		# Z = self.prep_for_draw_demo(I = self.results['I_0'], message='Depth', rng=KEY_RANGE['raw'])
 		# I = self.prep_for_draw_demo(I = np.abs(self.results['u_2']/self.results['I_0'])*500, message='Input image', rng=KEY_RANGE['raw'])
@@ -2329,7 +2336,7 @@ class Display(threading.Thread):
 		I = self.prep_for_draw_demo(I = self.results['I_0'], message='Input image', rng=KEY_RANGE['raw'])
 		
 		self.cache['draw'] = np.concatenate((I,Z), axis=1)
-
+		
 		# new shape
 		ncol = I.shape[1] + Z.shape[1]
 
@@ -2411,9 +2418,9 @@ class Display(threading.Thread):
 		displayThread.release()
 
 		# self.t.append(time.time()-self.t0)
-
+		'''
 		# print('The iccv_output function is executed successfully.')
-
+		
 	def regular_output(self):
 		global DEPTH_RANGE
 		# backup the data for saving
@@ -2650,6 +2657,7 @@ class Display(threading.Thread):
 		return D
 
 	def pseudo_color_Z(self, Z, conf, lo, hi, conf_thre):
+		print('entering pseudo Z')
 		# cut out the region
 		Z[np.where(conf <= conf_thre)] = lo
 		Z[np.where(Z<lo)] = lo
@@ -2658,7 +2666,7 @@ class Display(threading.Thread):
 		# Z[np.where(conf <= conf_thre)] = -1e10
 		# Z[np.where(Z<lo)] = -1e10
 		# Z[np.where(Z>hi)] = -1e10
-
+		print('okay')
 		# convert to pseudo color
 		Z_g = (Z-lo)/(hi-lo)*255
 		Z_g = Z_g.astype(np.uint8)
