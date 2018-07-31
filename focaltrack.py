@@ -736,6 +736,8 @@ class PulseCamProcessorTF(threading.Thread):
 
 		self.track_count = 0
 		self.track_num = 50
+
+		self.display = {}
 		
 		# make a video recorder
 		self.build_graph()
@@ -766,7 +768,9 @@ class PulseCamProcessorTF(threading.Thread):
 			
 
 			self.robust_track_Z()
-			'''
+
+			self.iccv_output()
+			
 			# obtain the input
 			# print('Is there a timer issue?')
 			# displayThread.acquire()
@@ -784,7 +788,7 @@ class PulseCamProcessorTF(threading.Thread):
 			# reset to the scanner
 			if ending_key == 'r':
 				self.robust_mode = 'scanner_starter'
-			'''
+			
 			# print('Halfway through.')
 			self.frames += 1
 			self.frames_track += 1
@@ -1316,8 +1320,6 @@ class PulseCamProcessorTF(threading.Thread):
 		displayThread.acquire()
 		results = deepcopy(self.results)
 		displayThread.release()		
-
-		self.iccv_output()
 		
 		return
 
@@ -1608,7 +1610,7 @@ class PulseCamProcessorTF(threading.Thread):
 		Z = self.prep_for_draw_demo(I = Z, message='Depth', rng=KEY_RANGE['raw'])
 		I = self.prep_for_draw_demo(I = self.results['I_0'], message='Input image', rng=KEY_RANGE['raw'])
 		
-		self.cache['draw'] = np.concatenate((I,Z), axis=1)
+		self.display['draw'] = np.concatenate((I,Z), axis=1)
 		
 		# new shape
 		ncol = I.shape[1] + Z.shape[1]
@@ -1684,10 +1686,10 @@ class PulseCamProcessorTF(threading.Thread):
 
 		# self.cache['draw'] = np.concatenate((I_o,flegend, fplane, cbar, nbar, self.cache['draw']),axis=0)
 
-		self.cache['draw'] = np.concatenate((flegend, fplane, cbar, nbar, self.cache['draw']),axis=0)
+		self.display['draw'] = np.concatenate((flegend, fplane, cbar, nbar, self.display['draw']),axis=0)
 
 		displayThread.acquire()
-		cv2.imshow("Focal Track Demo", self.cache['draw'])
+		cv2.imshow("Focal Track Demo", self.display['draw'])
 		displayThread.release()
 
 		# self.t.append(time.time()-self.t0)
@@ -1721,7 +1723,7 @@ class PulseCamProcessorTF(threading.Thread):
 				]
 
 	def pseudo_color_Z(self, Z, conf, lo, hi, conf_thre):
-		print('entering pseudo Z')
+		# print('entering pseudo Z')
 		# cut out the region
 		Z[np.where(conf <= conf_thre)] = lo
 		Z[np.where(Z<lo)] = lo
@@ -1730,7 +1732,7 @@ class PulseCamProcessorTF(threading.Thread):
 		# Z[np.where(conf <= conf_thre)] = -1e10
 		# Z[np.where(Z<lo)] = -1e10
 		# Z[np.where(Z>hi)] = -1e10
-		print('okay')
+		# print('okay')
 		# convert to pseudo color
 		Z_g = (Z-lo)/(hi-lo)*255
 		Z_g = Z_g.astype(np.uint8)
@@ -1759,6 +1761,55 @@ class PulseCamProcessorTF(threading.Thread):
 			return True
 		else:
 			return False
+
+	def bilateral(self, I, Z, conf):
+		return cv2.bilateralFilter(Z,5,0.3,3)
+
+	def prep_for_draw_demo(self, I, log = False, title = None, message = None, rng = [np.NaN, np.NaN]):
+		if len(I.shape) == 2 or I.shape[2] == 1:
+			valid = np.isfinite(I)
+			invalid = ~valid
+			
+			if (not np.all(invalid)) and (not np.all(~np.isnan(rng))):
+				# pdb.set_trace()
+				rng = [np.min(I[valid]), np.max(I[valid])]
+
+			#convert to color image
+			D = I.copy()
+			
+			D = np.float32(D)
+
+			if len(I.shape) == 2 or I.shape[2] == 1:
+				D = cv2.cvtColor(I, cv2.COLOR_GRAY2BGR)
+			if D.shape[2] != 3:
+				raise Exception("Unsupported shape for prepping for draw: " + str(D.shape))	
+			
+			D = (D-rng[0])/float(rng[1] - rng[0])
+			
+			if log:
+				D = np.log10(D)
+				D_rng = [np.min(D), np.max(D)]
+				D = (D-D_rng[0])/float(D_rng[1] - D_rng[0])
+			
+			#D = np.uint8(np.clip(255.0*D, 0, 255))
+			if invalid.any():
+				D[invalid] = NAN_COLOR
+		else:
+			D = I
+		
+		# D[I > rng[1]] = NAN_COLOR
+		# D[I < rng[0]] = NAN_COLOR
+		
+		t_s = 0.7
+		t_h = int(20*t_s)
+		title_str = "[%1.1e,%2.1e]"%(rng[0], rng[1])
+		if title is not None:
+			title_str = title  + "::" + title_str
+		
+		if message is not None:
+			#message = "fps: %2.2f"%self.get_fps()
+			cv2.putText(D, message, (5, t_h+5), FONT, t_s, (1,1,1))
+		return D
 
 	def scanner_starter(self):
 		# initialize the scanner
@@ -2138,7 +2189,7 @@ class Display(threading.Thread):
 
 			# c = cv2.waitKey(1) & 0xFF
 			
-			
+			'''
 			# print('Everything before this point of the while loop is properly run.')
 			
 			# print('Is there a timer problem?')
@@ -2186,7 +2237,7 @@ class Display(threading.Thread):
 				self.show_mode += 1 
 				self.show_mode = np.mod(self.show_mode, len(self.show_modes))
 				ending_key = 'c'
-			
+			'''
 			self.frames += 1
 			self.t.append(time.time()-self.t0)
 
