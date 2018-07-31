@@ -1464,8 +1464,8 @@ class PulseCamProcessorTF(threading.Thread):
 		else:
 			conf_thre = 1
 
-		self.results['I_0'] = self.I_cache[;,;,1].astype(np.float32)
-		self.results['I_1'] = self.I_cache[;,;,1].astype(np.float32)
+		self.results['I_0'] = self.I_cache[:,:,1].astype(np.float32)
+		self.results['I_1'] = self.I_cache[:,:,1].astype(np.float32)
 
 		# backup the data
 		self.depth_data['I_0'] = self.results['I_0']
@@ -2120,7 +2120,7 @@ class Display(threading.Thread):
 			# time.sleep(0.05)
 			self.process()
 		
-			self.iccv_output()
+			# self.iccv_output()
 
 			# c = cv2.waitKey(1) & 0xFF
 			
