@@ -769,8 +769,8 @@ class PulseCamProcessorTF(threading.Thread):
 
 			self.robust_track_Z()
 
-			self.iccv_output()
-			
+			# self.iccv_output()
+			'''
 			# obtain the input
 			# print('Is there a timer issue?')
 			# displayThread.acquire()
@@ -788,7 +788,7 @@ class PulseCamProcessorTF(threading.Thread):
 			# reset to the scanner
 			if ending_key == 'r':
 				self.robust_mode = 'scanner_starter'
-			
+			'''
 			# print('Halfway through.')
 			self.frames += 1
 			self.frames_track += 1
@@ -1266,8 +1266,9 @@ class PulseCamProcessorTF(threading.Thread):
 
 		# self.cache[:,:,]
 		displayThread.acquire()
-		self.I_cache = deepcopy(self.cache)
+		I_cache = deepcopy(self.cache)
 		displayThread.release()
+		self.I_cache = deepcopy(self.cache)
 		self.input_dict[self.I_in] = copy.copy(self.cache)
 
 		# cv2.imshow('Raw image', self.input_dict[self.I_in])
@@ -2189,7 +2190,7 @@ class Display(threading.Thread):
 
 			# c = cv2.waitKey(1) & 0xFF
 			
-			'''
+			
 			# print('Everything before this point of the while loop is properly run.')
 			
 			# print('Is there a timer problem?')
@@ -2237,7 +2238,7 @@ class Display(threading.Thread):
 				self.show_mode += 1 
 				self.show_mode = np.mod(self.show_mode, len(self.show_modes))
 				ending_key = 'c'
-			'''
+			
 			self.frames += 1
 			self.t.append(time.time()-self.t0)
 
@@ -2690,7 +2691,7 @@ class Display(threading.Thread):
 			DEPTH_RANGE_f[1],\
 			conf_thre
 		)
-		'''
+		
 		# create the image to draw
 		# Z = self.prep_for_draw_demo(I = self.results['I_0'], message='Depth', rng=KEY_RANGE['raw'])
 		# I = self.prep_for_draw_demo(I = np.abs(self.results['u_2']/self.results['I_0'])*500, message='Input image', rng=KEY_RANGE['raw'])
@@ -2780,7 +2781,7 @@ class Display(threading.Thread):
 		displayThread.release()
 
 		# self.t.append(time.time()-self.t0)
-		'''
+		
 		# print('The iccv_output function is executed successfully.')
 		
 	def regular_output(self):
