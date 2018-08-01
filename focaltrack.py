@@ -769,8 +769,8 @@ class PulseCamProcessorTF(threading.Thread):
 
 			self.robust_track_Z()
 
-			# self.iccv_output()
-			'''
+			self.iccv_output()
+			
 			# obtain the input
 			# print('Is there a timer issue?')
 			# displayThread.acquire()
@@ -788,7 +788,7 @@ class PulseCamProcessorTF(threading.Thread):
 			# reset to the scanner
 			if ending_key == 'r':
 				self.robust_mode = 'scanner_starter'
-			'''
+			
 			# print('Halfway through.')
 			self.frames += 1
 			self.frames_track += 1
@@ -2190,7 +2190,7 @@ class Display(threading.Thread):
 
 			# c = cv2.waitKey(1) & 0xFF
 			
-			
+			'''
 			# print('Everything before this point of the while loop is properly run.')
 			
 			# print('Is there a timer problem?')
@@ -2238,13 +2238,13 @@ class Display(threading.Thread):
 				self.show_mode += 1 
 				self.show_mode = np.mod(self.show_mode, len(self.show_modes))
 				ending_key = 'c'
-			
+			'''
 			self.frames += 1
 			self.t.append(time.time()-self.t0)
 
 			# display frame rate in real time
 			
-			if np.mod(self.frames,100)==0:
+			if np.mod(self.frames,1000)==0:
 				print('The last if statement is true.')
 				t1 = time.time()
 				perf = (1.0*self.frames)/(t1-t0)
