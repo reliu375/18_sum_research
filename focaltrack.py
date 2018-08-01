@@ -769,7 +769,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 			self.robust_track_Z()
 
-			self.iccv_output()
+			# self.iccv_output()
 			
 			# obtain the input
 			# print('Is there a timer issue?')
@@ -3156,6 +3156,7 @@ def multithreading_test():
 		cfgf[i]['ra1_2'] = 0
 
 	b = PulseCamProcessorTF(cfg[0:-1], cfgf)
+	
 	print('initialized TF processor')
 	# b.run()	
 	# pdb.set_trace()	
@@ -3166,7 +3167,7 @@ def multithreading_test():
 	print('display initialized')	
 	
 	
-
+	
 	# c.start()
 	a.start()
 
@@ -3187,6 +3188,7 @@ def multithreading_test():
 	
 
 	a.clean_up()
+	
 if __name__ == "__main__":
 	# debug_test()
 	multithreading_test()
