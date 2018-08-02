@@ -9,11 +9,11 @@ y = tf.matmul(x, w)
 
 output = tf.nn.softmax(y)
 init_op = w.initializer
-print(x)
-print(w)
-print(y)
-print(output)
-print(init_op)
+# print(x)
+# print(w)
+# print(y)
+# print(output)
+# print(init_op)
 
 with tf.Session() as sess:
 	sess.run(init_op)
@@ -21,6 +21,8 @@ with tf.Session() as sess:
 	print(sess.run(output))
 
 	y_val, output_val = sess.run([y, output])
+
+	print(tf.get_default_graphs())
 
 '''
 import tensorrt as trt
