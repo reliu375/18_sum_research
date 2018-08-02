@@ -22,7 +22,7 @@ with tf.Session() as sess:
 
 	y_val, output_val = sess.run([y, output])
 
-	print(tf.get_default_graphs())
+	print(tf.get_default_graph())
 
 '''
 import tensorrt as trt
