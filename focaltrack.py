@@ -1095,6 +1095,14 @@ class PulseCamProcessorTF(threading.Thread):
 			init_op = tf.global_variables_initializer()
 			self.session.run(init_op)
 
+			print(self.graph)
+			self.graph = tf.get_default_graph()
+			print(self.graph)
+			writer = tf.summary.FileWriter('.')
+			writer.add_graph(self.graph)
+			writer.close()
+
+
 	def align_maps_ext(self, vars_to_fuse = None):
 		# this function aligns different
 		# res into the same one
@@ -3129,7 +3137,7 @@ class Display(threading.Thread):
 
 def multithreading_test():
 	# c = OutsideCamera()
-	a = Camera()
+	# a = Camera()
 	
 	# initialize the pulsecam processor
 	# cfg_file = "./opt_results/pyConfLensFlowNetFast/"+\
@@ -3161,7 +3169,7 @@ def multithreading_test():
 	# b.run()	
 	# pdb.set_trace()	
 	
-	
+	'''
 	# time.sleep(5)
 	d = Display(cfg[0:-1], cfgf)
 	print('display initialized')	
@@ -3188,7 +3196,7 @@ def multithreading_test():
 	
 
 	a.clean_up()
-	
+	'''
 if __name__ == "__main__":
 	# debug_test()
 	multithreading_test()

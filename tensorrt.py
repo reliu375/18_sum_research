@@ -51,3 +51,4 @@ context.enquene(1, bindings, stream.handle, None)
 
 stream.synchronize()
 	
+# TODO: destroy all the objects to clear memory.
