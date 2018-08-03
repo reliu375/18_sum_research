@@ -1,7 +1,9 @@
 import tensorflow as tf
 import numpy as np
-# import tensorrt as trt 
+import tensorrt as trt 
+from tensorrt.parsers import uffparser
 # import math
+OUTPUT = ["add"]
 
 a = tf.constant(3.0, dtype = tf.float32)
 b = tf.constant(4.0)
@@ -10,25 +12,18 @@ y = a + b
 print(tf.get_default_graph())
 writer = tf.summary.FileWriter('.')
 writer.add_graph(tf.get_default_graph())
-# events.out.tfevents.{timestamp}.{hostname}
-# print(x)
-# print(w)
-# print(y)
-# print(output)
-# print(init_op)
-'''
-with tf.Session() as sess:
-	sess.run(init_op)
+writer.close()
 
-	print(sess.run(output))
+init = tf.global_variable_initializer()
 
-	y_val, output_val = sess.run([y, output])
+session = tf.Session()
+session.run(init)
 
-	print(tf.get_default_graph())
-	writer = tf.summary.FileWriter('.')
+graphdef = tf.get_default_graph().as_graph_def()
+frozen_graph = tf.graph_util.convert_variables_to_constants(sess, graphdef, OUTPUT)
 
-	writer.add_graph(tf.get_default_graph())
-'''
+
+	
 '''
 import tensorrt as trt
 from tensorrt.parsers import uffparser
