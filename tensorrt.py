@@ -3,18 +3,20 @@ import numpy as np
 # import tensorrt as trt 
 # import math
 
-x = tf.constant([[37.0, -23.0],[1.0, 4.0]])
-w = tf.Variable(tf.random_uniform([2,2]))
-y = tf.matmul(x, w)
+a = tf.constant(3.0, dtype = tf.float32)
+b = tf.constant(4.0)
+y = a + b
 
-output = tf.nn.softmax(y)
-init_op = w.initializer
+print(tf.get_default_graph())
+writer = tf.summary.FileWriter('.')
+writer.add_graph(tf.get_default_graph())
+# events.out.tfevents.{timestamp}.{hostname}
 # print(x)
 # print(w)
 # print(y)
 # print(output)
 # print(init_op)
-
+'''
 with tf.Session() as sess:
 	sess.run(init_op)
 
@@ -23,7 +25,10 @@ with tf.Session() as sess:
 	y_val, output_val = sess.run([y, output])
 
 	print(tf.get_default_graph())
+	writer = tf.summary.FileWriter('.')
 
+	writer.add_graph(tf.get_default_graph())
+'''
 '''
 import tensorrt as trt
 from tensorrt.parsers import uffparser
