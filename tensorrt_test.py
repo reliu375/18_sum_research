@@ -2,6 +2,9 @@ import tensorflow as tf
 import numpy as np
 import tensorrt as trt 
 from tensorrt.parsers import uffparser
+import pycuda.driver as cuda
+import pyduca.autoinit
+
 # import math
 OUTPUT = ["add"]
 
@@ -14,14 +17,15 @@ writer = tf.summary.FileWriter('.')
 writer.add_graph(tf.get_default_graph())
 writer.close()
 
-init = tf.global_variables_initializer()
+init = tf.global_variable_initializer()
 
 session = tf.Session()
 session.run(init)
 
 graphdef = tf.get_default_graph().as_graph_def()
-frozen_graph = tf.graph_util.convert_variables_to_constants(session, graphdef, OUTPUT)
+frozen_graph = tf.graph_util.convert_variables_to_constants(sess, graphdef, OUTPUT)
 
+'''
 def cali_graph(fr_gh):
 	trt_graph = trt.create_inference_graph(fr_gh, OUTPUT, 16, 4000000000, "INT8")
 	return trt_graph
@@ -58,4 +62,6 @@ context.enquene(1, bindings, stream.handle, None)
 stream.synchronize()
 	
 # TODO: destroy all the objects to clear memory.
-'''
+context.destroy()
+engine.destroy()
+runtime.destroy()

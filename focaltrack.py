@@ -21,6 +21,9 @@ import time
 from scipy import interpolate
 import numpy.matlib
 
+import tensorrt as trt
+from tensort.parsers import uffparser
+
 #notes
 #  -did I mix up x and y again?  always worth checking
 
@@ -40,6 +43,7 @@ ending_key = 'c'
 robust_mode = 'scanner_starter'
 image_result = [0,0]
 camera_resolution = []
+output_node_name = []
 
 #the range for different outputs, range set to NaN means auto-ranging
 DEPTH_RANGE = [-1.0,-0.3]#[-1.0,-0.3] # -1.0,-0.5
@@ -1096,11 +1100,38 @@ class PulseCamProcessorTF(threading.Thread):
 			self.session.run(init_op)
 
 			print(self.graph)
-			self.graph = tf.get_default_graph()
+			self.graph = tf.get_default_graph().as_graph_def()
 			print(self.graph)
 			writer = tf.summary.FileWriter('.')
 			writer.add_graph(self.graph)
 			writer.close()
+
+			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name)
+
+			self.graph = tf.graph_util.remove_training_nodes(self.graph)
+
+			uff_model = uff.from_tensorflow(self.graph, output_node_name)
+
+			G_LOGGER = trt.infer.ConsoleLogger(trt.infer.LogSeverity.ERROR)
+
+			parser = uffparser.create_uff_parser()
+			# TODO: fill in the inputs/outputs
+			parser.register_input()
+			parser.register_output()
+
+			engine = trt.utils.uff_to_trt_engine(G_LOGGER, uff_model, parser, 1, 1 << 20)
+			parser.destroy()
+
+			runtime = trt.infer.create_infer_runtime(G_LOGGER)
+			context = engine.create_execution_context()
+
+			stream = cuda.Stream()
+
+			d_input - cuda.mem_alloc(1 * self.cache.nbytes + 1000)
+			d_output = cuda.mem_alloc(1 * self.cache.nbytes + 1000)
+
+			bindings = [int(d_input), int(d_output)]
+
 
 
 	def align_maps_ext(self, vars_to_fuse = None):
