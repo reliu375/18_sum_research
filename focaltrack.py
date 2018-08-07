@@ -1,7 +1,9 @@
+'''
 import serial
 import argparse
 
 import cv2
+'''
 # import flycapture2 as fc2
 import tensorflow as tf
 import numpy as np
@@ -23,6 +25,9 @@ import numpy.matlib
 
 import tensorrt as trt
 from tensort.parsers import uffparser
+import uff
+import pycuda.driver as cuda
+import pycuda.autoinit
 
 #notes
 #  -did I mix up x and y again?  always worth checking
