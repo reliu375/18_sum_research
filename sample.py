@@ -14,6 +14,14 @@ import os
 
 import uff
 
+STARTER_LEARNING_RATE = 1e-4
+BATCH_SIZE = 10
+NUM_CLASSES = 10
+MAX_STEPS = 3000
+IMAGE_SIZE = 28
+IMAGE_PIXELS = IMAGE_SIZE ** 2
+OUTPUT_NAMES = ["fc2/Relu"]
+
 def WeightsVariable(shape):
 	return tf.Variable(tf.truncated_normal(shape, stddev=0.1, name='weights'))
 
