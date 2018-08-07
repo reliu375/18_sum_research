@@ -1121,7 +1121,9 @@ class PulseCamProcessorTF(threading.Thread):
 			writer.add_graph(self.graph)
 			writer.close()
 			print('Graph done')
-			
+
+			# Under development
+			'''
 			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name)
 
 			self.graph = tf.graph_util.remove_training_nodes(self.graph)
@@ -1146,7 +1148,7 @@ class PulseCamProcessorTF(threading.Thread):
 
 			self.bindings.append(int(d_input))
 			self.bindings.append(int(d_output))
-			
+			'''
 
 
 	def align_maps_ext(self, vars_to_fuse = None):
@@ -1347,10 +1349,12 @@ class PulseCamProcessorTF(threading.Thread):
 		self.input_dict[self.a1_in] = self.cfg[0]['a1']
 		self.input_dict[self.offset_in] = self.offset
 
+		'''
 		cuda.memcpy_htod_async(self.d_input, self.input_dict[self.I_in], self.stream)
 		self.context.enquene(1, self.bindings, self.stream.handle, None)
 		cuda.memcpy_dtoh_async(self.results, self.d_output, self.stream)
 		self.stream.synchronize()
+		'''
 
 		# print('run1')
 		self.session.run(self.input_data, self.input_dict)
