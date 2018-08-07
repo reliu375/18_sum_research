@@ -8,17 +8,17 @@ import uff
 import pdb
 
 # import math
-OUTPUT = []
+OUTPUT = ["add/result"]
 
 a = tf.constant(3.0, dtype = tf.float32)
 b = tf.constant(4.0)
 y = a + b
-'''
+
 print(tf.get_default_graph())
 writer = tf.summary.FileWriter('.')
 writer.add_graph(tf.get_default_graph())
 writer.close()
-'''
+
 init = tf.global_variables_initializer()
 
 session = tf.Session()
@@ -36,13 +36,13 @@ print(cali_graph(frozen_graph))
 '''
 model = tf.graph_util.remove_training_nodes(frozen_graph)
 
-uff_model = uff.from_tensorflow(model, [])
+uff_model = uff.from_tensorflow(model, ["add/result"])
 
 G_LOGGER = trt.infer.ConsoleLogger(trt.infer.LogSeverity.ERROR)
 
 pdb.set_trace()
 parser = uffparser.create_uff_parser()
-parser.register_output("MarkOutput_0")
+parser.register_output("add/result")
 
 pdb.set_trace()
 engine = trt.utils.uff_to_trt_engine(G_LOGGER, uff_model, parser,1, 1 << 20) 

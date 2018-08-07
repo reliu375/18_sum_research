@@ -747,7 +747,17 @@ class PulseCamProcessorTF(threading.Thread):
 		self.track_num = 50
 
 		self.display = {}
-		
+
+		self.G_LOGGER = trt.infer.ConsoleLogger(trt.infer.LogSeverity.ERROR)
+		self.uff_model = 0
+		self.engine = 0
+		self.runtime = 0
+		self.context = 0
+		self.stream = 0
+		self.bindings = []
+		self.d_input = 0
+		self.d_output = 0
+
 		# make a video recorder
 		self.build_graph()
 		print("build graph")
@@ -760,7 +770,7 @@ class PulseCamProcessorTF(threading.Thread):
 		t0 = time.time()
 		while True:
 			# time.sleep(1)
-			self.camera_process()
+			# self.camera_process()
 
 			# print('Entering the while loop for PROCESSOR RUN')
 			# self.t0 = time.time()
@@ -1111,33 +1121,32 @@ class PulseCamProcessorTF(threading.Thread):
 			writer.add_graph(self.graph)
 			writer.close()
 			print('Graph done')
-			'''
+			
 			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name)
 
 			self.graph = tf.graph_util.remove_training_nodes(self.graph)
 
-			uff_model = uff.from_tensorflow(self.graph, output_node_name)
-
-			G_LOGGER = trt.infer.ConsoleLogger(trt.infer.LogSeverity.ERROR)
+			self.uff_model = uff.from_tensorflow(self.graph, output_node_name)
 
 			parser = uffparser.create_uff_parser()
 			# TODO: fill in the inputs/outputs
 			parser.register_input()
 			parser.register_output()
 
-			engine = trt.utils.uff_to_trt_engine(G_LOGGER, uff_model, parser, 1, 1 << 20)
+			self.engine = trt.utils.uff_to_trt_engine(G_LOGGER, uff_model, parser, 1, 1 << 20)
 			parser.destroy()
 
-			runtime = trt.infer.create_infer_runtime(G_LOGGER)
-			context = engine.create_execution_context()
+			self.runtime = trt.infer.create_infer_runtime(G_LOGGER)
+			self.context = engine.create_execution_context()
 
-			stream = cuda.Stream()
+			self.stream = cuda.Stream()
 
-			d_input - cuda.mem_alloc(1 * self.cache.nbytes + 1000)
-			d_output = cuda.mem_alloc(1 * self.cache.nbytes + 1000)
+			self.d_input - cuda.mem_alloc(1 * self.cache.nbytes + 1000)
+			self.d_output = cuda.mem_alloc(1 * self.cache.nbytes + 1000)
 
-			bindings = [int(d_input), int(d_output)]
-			'''
+			self.bindings.append(int(d_input))
+			self.bindings.append(int(d_output))
+			
 
 
 	def align_maps_ext(self, vars_to_fuse = None):
@@ -1334,9 +1343,14 @@ class PulseCamProcessorTF(threading.Thread):
 		# displayThread.release()		
 		# displayThread.notify()
 			
-		# self.input_dict[self.I_in] = np.zeros([300,480,2])	
+		self.input_dict[self.I_in] = np.zeros([300,480,2])	
 		self.input_dict[self.a1_in] = self.cfg[0]['a1']
 		self.input_dict[self.offset_in] = self.offset
+
+		cuda.memcpy_htod_async(self.d_input, self.input_dict[self.I_in], self.stream)
+		self.context.enquene(1, self.bindings, self.stream.handle, None)
+		cuda.memcpy_dtoh_async(self.results, self.d_output, self.stream)
+		self.stream.synchronize()
 
 		# print('run1')
 		self.session.run(self.input_data, self.input_dict)
