@@ -1104,12 +1104,13 @@ class PulseCamProcessorTF(threading.Thread):
 			init_op = tf.global_variables_initializer()
 			self.session.run(init_op)
 
-			print(self.graph)
+			# print(self.graph)
 			self.graph = tf.get_default_graph().as_graph_def()
-			print(self.graph)
+			# print(self.graph)
 			writer = tf.summary.FileWriter('.')
 			writer.add_graph(self.graph)
 			writer.close()
+			print('Graph done')
 			'''
 			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name)
 
