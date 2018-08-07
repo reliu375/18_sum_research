@@ -1,9 +1,9 @@
-'''
+
 import serial
 import argparse
 
 import cv2
-'''
+
 # import flycapture2 as fc2
 import tensorflow as tf
 import numpy as np
@@ -14,7 +14,7 @@ import json
 import os, glob
 import math
 import copy
-import PySpin as ps
+# import PySpin as ps
 import pdb
 from copy import deepcopy
 
@@ -24,7 +24,7 @@ from scipy import interpolate
 import numpy.matlib
 
 import tensorrt as trt
-from tensort.parsers import uffparser
+from tensorrt.parsers import uffparser
 import uff
 import pycuda.driver as cuda
 import pycuda.autoinit
