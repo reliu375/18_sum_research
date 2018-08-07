@@ -47,7 +47,7 @@ results = 0
 ending_key = 'c'
 robust_mode = 'scanner_starter'
 image_result = [0,0]
-camera_resolution = []
+camera_resolution = (600,960,)
 output_node_name = []
 
 #the range for different outputs, range set to NaN means auto-ranging
@@ -1110,7 +1110,7 @@ class PulseCamProcessorTF(threading.Thread):
 			writer = tf.summary.FileWriter('.')
 			writer.add_graph(self.graph)
 			writer.close()
-
+			'''
 			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name)
 
 			self.graph = tf.graph_util.remove_training_nodes(self.graph)
@@ -1136,7 +1136,7 @@ class PulseCamProcessorTF(threading.Thread):
 			d_output = cuda.mem_alloc(1 * self.cache.nbytes + 1000)
 
 			bindings = [int(d_input), int(d_output)]
-
+			'''
 
 
 	def align_maps_ext(self, vars_to_fuse = None):
