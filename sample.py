@@ -197,10 +197,16 @@ logits = network(d)
 session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 init = tf.global_variables_initializer()
 session.run(init)
+
+tf_time_initial = time.time()
+
 for index in range(2500):
 	f_d = fill_feed_dict(test_data, d, l)
+	# TODO: add print statements to print the dictionary
 	result = session.run(logits, f_d)
 
+tf_time_final = time.time()
+print(tf_time_final - tf_time_initial)
 
 uff_model = uff.from_tensorflow(tf_model, ["fc2/Relu"])
 
