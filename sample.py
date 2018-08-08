@@ -196,18 +196,18 @@ parser.register_output("fc2/Relu")
 engine = trt.utils.uff_to_trt_engine(G_LOGGER, uff_model, parser, 1, 1 << 20)
 parser.destroy()
 
-img, label = MNIST_DATASETS.test.next_batch(1)
-pdb.set_trace()
-img = img[0]
-img = img.astype(np.float32)
-label = label[0]
-%matplotlib inline
-imshow(img.reshape(28,28))
-
 runtime = trt.infer.create_infer_runtime(G_LOGGER)
 context = engine.create_execution_context()
 
+img, label = MNIST_DATASETS.test.next_batch(1)
+img = img[0]
+img = img.astype(np.float32)
+label = label[0]
+# %matplotlib inline
+img.reshape(28,28)
+
 output = np.empty(10, dtype = np.float32)
+
 d_input = cuda.mem_alloc(1 * img.nbytes)
 d_output = cuda.mem_alloc(1 * output.nbytes)
 
@@ -215,13 +215,27 @@ bindings = [int(d_input), int(d_output)]
 
 stream = cuda.Stream()
 
-cuda.memcpy_htod_async(d_input, img, stream)
-context.enquene(1, bindings, stream.handle, None)
-cuda.memcpy_dtoh_async(output, d_output, stream)
-stream.synchronize()
+counter = 0
 
-print("Test Case: " + str(label))
-print("Prediction: " + str(np.argmax(output)))
+for counter in range(2500):
+
+	img, label = MNIST_DATASETS.test.next_batch(1)
+	img = img[0]
+	img = img.astype(np.float32)
+	label = label[0]
+# %matplotlib inline
+	img.reshape(28,28)
+
+	cuda.memcpy_htod_async(d_input, img, stream)
+	context.enquene(1, bindings, stream.handle, None)
+	cuda.memcpy_dtoh_async(output, d_output, stream)
+	stream.synchronize()
+
+	print("Test Case: " + str(label))
+	print("Prediction: " + str(np.argmax(output)))
+
+	if counter % 500 == 0:
+		print('500 images done.')
 
 context.destroy()
 engine.destroy()
