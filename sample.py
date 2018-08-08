@@ -189,13 +189,15 @@ MNIST_DATASETS = tf.contrib.learn.datasets.load_dataset("mnist")
 tf_model = run_training(MNIST_DATASETS)
 
 index = 0
-session = tf.Session()
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
+
+test_data = MNIST_DATASETS.test
+d, l = placeholder_inputs(1)
+logits = network(d)
+session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 init = tf.global_variables_initializer()
 session.run(init)
-test_data = MNIST_DATASETS.test
 for index in range(2500):
-	d, l = placeholder_inputs(1)
-	logits = network(d)
 	f_d = fill_feed_dict(test_data, d, l)
 	result = session.run(logits, f_d)
 
