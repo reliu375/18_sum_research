@@ -192,12 +192,11 @@ index = 0
 session = tf.Session()
 init = tf.global_variables_initializer()
 session.run(init)
+test_data = MNIST_DATASETS.test
 for index in range(2500):
-	d, l = MNIST_DATASETS.test.next_batch(1)
-	f_d = {}
-	f_d['image_pl'] = d
-	f_d['label_pl'] = l
-	result = session.run(fc2, f_d)
+	d, l = placeholder_inputs(1)
+	f_d = fill_feed_dict(test_data, d, l)
+	result = session.run("fc2/Relu", f_d)
 
 
 uff_model = uff.from_tensorflow(tf_model, ["fc2/Relu"])
