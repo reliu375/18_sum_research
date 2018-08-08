@@ -188,6 +188,18 @@ def run_training(data_sets):
 MNIST_DATASETS = tf.contrib.learn.datasets.load_dataset("mnist")
 tf_model = run_training(MNIST_DATASETS)
 
+index = 0
+session = tf.Session()
+init = tf.global_variables_initializer()
+session.run(init)
+for index in range(2500):
+	d, l = MNIST_DATASETS.test.next_batch(1)
+	f_d = {}
+	f_d['image_pl'] = d
+	f_d['label_pl'] = l
+	result = session.run(fc2, f_d)
+
+
 uff_model = uff.from_tensorflow(tf_model, ["fc2/Relu"])
 
 G_LOGGER = trt.infer.ConsoleLogger(trt.infer.LogSeverity.ERROR)
