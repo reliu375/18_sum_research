@@ -195,8 +195,9 @@ session.run(init)
 test_data = MNIST_DATASETS.test
 for index in range(2500):
 	d, l = placeholder_inputs(1)
+	logits = network(d)
 	f_d = fill_feed_dict(test_data, d, l)
-	result = session.run("fc2/Relu", f_d)
+	result = session.run(logits, f_d)
 
 
 uff_model = uff.from_tensorflow(tf_model, ["fc2/Relu"])
