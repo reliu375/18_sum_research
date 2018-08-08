@@ -1117,15 +1117,16 @@ class PulseCamProcessorTF(threading.Thread):
 			# print(self.graph)
 			self.graph = tf.get_default_graph().as_graph_def()
 
-			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name)
+			# self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name)
 
-			self.graph = tf.graph_util.remove_training_nodes(self.graph)
+			# self.graph = tf.graph_util.remove_training_nodes(self.graph)
 			
 			# print(self.graph)
 			writer = tf.summary.FileWriter('.')
 			writer.add_graph(self.graph)
 			writer.close()
 			print('Graph done')
+			pdb.set_trace()
 			# tf.train.write_graph(self.graph, '.', 'graph.pbtxt')
 
 			# Under development
