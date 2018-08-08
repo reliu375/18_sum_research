@@ -219,6 +219,7 @@ bindings = [int(d_input), int(d_output)]
 stream = cuda.Stream()
 
 counter = 0
+correct = 0
 rt_time_initial = time.time()
 for counter in range(2500):
 
@@ -230,9 +231,12 @@ for counter in range(2500):
 	img.reshape(28,28)
 
 	cuda.memcpy_htod_async(d_input, img, stream)
-	context.enquene(1, bindings, stream.handle, None)
+	context.enqueue(1, bindings, stream.handle, None)
 	cuda.memcpy_dtoh_async(output, d_output, stream)
 	stream.synchronize()
+
+	if label == np.argmax(output):
+		correct += 1
 
 	# print("Test Case: " + str(label))
 	# print("Prediction: " + str(np.argmax(output)))
@@ -242,6 +246,7 @@ for counter in range(2500):
 
 rt_time_final = time.time()
 print(rt_time_final - rt_time_initial)
+print(correct/2500)
 context.destroy()
 engine.destroy()
 runtime.destroy()
