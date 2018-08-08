@@ -151,6 +151,7 @@ def run_training(data_sets):
 		test_writer = tf.summary.FileWriter("/tmp/tensorflow/mnist/log/validation",
 											graph=tf.get_default_graph())
 		sess.run(init)
+		training_time_initial = time.time()
 		for step in range(MAX_STEPS):
 			start_time = time.time()
 			feed_dict = fill_feed_dict(data_sets.train,
@@ -175,6 +176,8 @@ def run_training(data_sets):
 							  summary)
 				test_writer.add_summary(log, step)
 		# Return sess
+		training_time_final = time.time()
+		print(training_time_final - training_time_initial)
 
 		graphdef = tf.get_default_graph().as_graph_def()
 		frozen_graph = tf.graph_util.convert_variables_to_constants(sess,
@@ -216,7 +219,7 @@ bindings = [int(d_input), int(d_output)]
 stream = cuda.Stream()
 
 counter = 0
-
+rt_time_initial = time.time()
 for counter in range(2500):
 
 	img, label = MNIST_DATASETS.test.next_batch(1)
@@ -231,12 +234,14 @@ for counter in range(2500):
 	cuda.memcpy_dtoh_async(output, d_output, stream)
 	stream.synchronize()
 
-	print("Test Case: " + str(label))
-	print("Prediction: " + str(np.argmax(output)))
+	# print("Test Case: " + str(label))
+	# print("Prediction: " + str(np.argmax(output)))
 
 	if counter % 500 == 0:
 		print('500 images done.')
 
+rt_time_final = time.time()
+print(rt_time_final - rt_time_initial)
 context.destroy()
 engine.destroy()
 runtime.destroy()
