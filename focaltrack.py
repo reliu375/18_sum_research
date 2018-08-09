@@ -1083,6 +1083,8 @@ class PulseCamProcessorTF(threading.Thread):
 					self.resolution[0]+(-1,)
 				)
 
+			pdb.set_trace()
+
 			# 
 			self.valid_windowed_region_fuse()
 
