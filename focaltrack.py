@@ -1127,7 +1127,7 @@ class PulseCamProcessorTF(threading.Thread):
 			writer.close()
 			print('Graph done')
 			pdb.set_trace()
-			# tf.train.write_graph(self.graph, '.', 'graph.pbtxt')
+			tf.train.write_graph(self.graph, '.', 'graph.pbtxt')
 
 			# Under development
 
