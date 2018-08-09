@@ -758,6 +758,7 @@ class PulseCamProcessorTF(threading.Thread):
 		self.d_input = 0
 		self.d_output = 0
 
+		self.builder = tf.saved_model.builder.SavedModelBuilder('.')
 		# make a video recorder
 		self.build_graph()
 		print("build graph")
@@ -1373,6 +1374,7 @@ class PulseCamProcessorTF(threading.Thread):
 			res_dict[k] = self.vars_fuse[k]
 		
 		# print('run2')
+		'''
 		self.results = self.session.run(res_dict)
 		tf.saved_model.simple_save(self.session, "saved_model.pbtxt", 
 				inputs={"I_in": self.input_dict[self.I_in],
@@ -1383,7 +1385,11 @@ class PulseCamProcessorTF(threading.Thread):
 						"conf": res_dict['conf'],
 						"u_2": res_dict['u_2'],
 						"conf_non": res_dict['conf_non']})
-		
+		'''
+		builder.add_meta_graph_and_variables(self.session,
+											 [tf.saved_model.tag_contants.SERVING],
+											 None, None)
+		builder.save()
 		# self.results = []
 
 		# if self.robust_mode == 'tracker':
