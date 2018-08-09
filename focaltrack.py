@@ -1387,7 +1387,7 @@ class PulseCamProcessorTF(threading.Thread):
 						"conf_non": res_dict['conf_non']})
 		'''
 		self.builder.add_meta_graph_and_variables(self.session,
-											 	[tf.saved_model.tag_contants.SERVING],
+											 	[tf.saved_model.tag_constants.SERVING],
 											 	None, None)
 		self.builder.save()
 		# self.results = []
