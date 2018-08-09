@@ -48,7 +48,7 @@ ending_key = 'c'
 robust_mode = 'scanner_starter'
 image_result = [0,0]
 camera_resolution = (600,960,)
-output_node_name = []
+output_node_name = ["Reshape_6", "truediv_59", "strided_slice_32", "Reshape_8", "strided_slice_33"]
 
 #the range for different outputs, range set to NaN means auto-ranging
 DEPTH_RANGE = [-1.0,-0.3]#[-1.0,-0.3] # -1.0,-0.5
@@ -804,6 +804,7 @@ class PulseCamProcessorTF(threading.Thread):
 			if ending_key == 'q':
 				print("quitting")
 				self.final_statistics()
+				self.terminate()
 				break
 
 			# reset to the scanner
@@ -1120,29 +1121,34 @@ class PulseCamProcessorTF(threading.Thread):
 
 			# print(self.graph)
 			self.graph = tf.get_default_graph().as_graph_def()
-
-			# self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name)
-
-			# self.graph = tf.graph_util.remove_training_nodes(self.graph)
-			
-			# print(self.graph)
 			writer = tf.summary.FileWriter('.')
 			writer.add_graph(self.graph)
 			writer.close()
 			print('Graph done')
-			pdb.set_trace()
+			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name)
+
+			self.graph = tf.graph_util.remove_training_nodes(self.graph)
+			
+			# print(self.graph)
+			# pdb.set_trace()
 			# tf.train.write_graph(self.graph, '.', 'graph.pbtxt')
 
 			# Under development
 
 
-			'''
+			
 			self.uff_model = uff.from_tensorflow(self.graph, output_node_name)
 
 			parser = uffparser.create_uff_parser()
 			# TODO: fill in the inputs/outputs
-			parser.register_input()
-			parser.register_output()
+			parser.register_input("Variable_1", (300, 480, 2), 0)
+			parser.register_input("Variable_3", (), 0)
+			parser.register_input("Variable_5", (), 0)
+			parser.register_output("Reshape_6")
+			parser.register_output("truediv_59")
+			parser.register_output("strided_slice_32")
+			parser.register_output("Reshape_8")
+			parser.register_output("strided_slice_33")
 
 			self.engine = trt.utils.uff_to_trt_engine(G_LOGGER, uff_model, parser, 1, 1 << 20)
 			parser.destroy()
@@ -1153,11 +1159,13 @@ class PulseCamProcessorTF(threading.Thread):
 			self.stream = cuda.Stream()
 
 			self.d_input - cuda.mem_alloc(1 * self.cache.nbytes + 1000)
-			self.d_output = cuda.mem_alloc(1 * self.cache.nbytes + 1000)
+			self.d_output = cuda.mem_alloc(5 * self.cache.nbytes + 1000)
 
 			self.bindings.append(int(d_input))
 			self.bindings.append(int(d_output))
-			'''
+			for key in range(['Z','Zf','conf','u_2','conf_non']):
+				self.results[key] = 0
+
 
 
 	def align_maps_ext(self, vars_to_fuse = None):
@@ -1358,13 +1366,16 @@ class PulseCamProcessorTF(threading.Thread):
 		self.input_dict[self.a1_in] = self.cfg[0]['a1']
 		self.input_dict[self.offset_in] = self.offset
 
-		'''
+		
 		cuda.memcpy_htod_async(self.d_input, self.input_dict[self.I_in], self.stream)
-		self.context.enquene(1, self.bindings, self.stream.handle, None)
+		cuda.memcpy_htod_async(self.d_input, self.input_dict[self.a1_in], self.stream)
+		cuda.memcpy_htod_async(self.d_input, self.input_dict[self.offset_in], self.stream)
+		self.context.enqueue(1, self.bindings, self.stream.handle, None)
 		cuda.memcpy_dtoh_async(self.results, self.d_output, self.stream)
 		self.stream.synchronize()
-		'''
+		
 
+		'''
 		# print('run1')
 		self.session.run(self.input_data, self.input_dict)
 
@@ -1374,8 +1385,10 @@ class PulseCamProcessorTF(threading.Thread):
 	
 		for k in self.image_to_show:
 			res_dict[k] = self.vars_fuse[k]
-		
+		'''
+
 		# print('run2')
+
 		'''
 		self.results = self.session.run(res_dict)
 		tf.saved_model.simple_save(self.session, "saved_model.pbtxt", 
@@ -1387,7 +1400,7 @@ class PulseCamProcessorTF(threading.Thread):
 						"conf": res_dict['conf'],
 						"u_2": res_dict['u_2'],
 						"conf_non": res_dict['conf_non']})
-		'''
+		
 		self.builder.add_meta_graph_and_variables(self.session,
 											 	[tf.saved_model.tag_constants.SERVING],
 											 	None, None)
@@ -1397,7 +1410,7 @@ class PulseCamProcessorTF(threading.Thread):
 		# if self.robust_mode == 'tracker':
 		# 	# keep the correct sequence
 		# 	self.keep_sequence()
-		
+		'''
 		# print('swap')
 		self.swap_frames()		
 		
@@ -2130,6 +2143,11 @@ class PulseCamProcessorTF(threading.Thread):
 	def __del__(self):
 		# self.video_writer.release()
 		cv2.destroyAllWindows()
+
+	def terminate(self):
+		self.context.destroy()
+		self.engine.destroy()
+		self.runtime.destroy()
 		
 
 MAX_VAL = 255.0
@@ -3244,7 +3262,7 @@ def multithreading_test():
 	b = PulseCamProcessorTF(cfg[0:-1], cfgf)
 	
 	print('initialized TF processor')
-	b.run()	
+	# b.run()	
 	# pdb.set_trace()	
 	
 	'''
