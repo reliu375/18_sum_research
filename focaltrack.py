@@ -1378,7 +1378,11 @@ class PulseCamProcessorTF(threading.Thread):
 				inputs={"I_in": self.input_dict[self.I_in],
 						"a1_in": self.input_dict[self.a1_in],
 						"offset_in": self.input_dict[self.offset_in]},
-				outputs={"res": res_dict})
+				outputs={"Z": res_dict['Z'],
+						"Zf": res_dict['Zf'],
+						"conf": res_dict['conf'],
+						"u_2": res_dict['u_2'],
+						"conf_non": res_dict['conf_non']})
 		
 		# self.results = []
 
