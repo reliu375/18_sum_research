@@ -13,7 +13,8 @@ OUTPUT = ["add/result"]
 a = tf.constant(3.0, dtype = tf.float32)
 b = tf.constant(4.0)
 y = a + b
-
+print(y)
+pdb.set_trace()
 print(tf.get_default_graph())
 writer = tf.summary.FileWriter('.')
 writer.add_graph(tf.get_default_graph())

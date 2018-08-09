@@ -1,7 +1,7 @@
 import serial 
 ser = serial.Serial()
 
-ser.port = "/dev/ttyUSB0" # may be called something different
+ser.port = "/dev/ttyUSB1" # may be called something different
 ser.baudrate = 9600 # may be different
 ser.open()
 if ser.isOpen():
