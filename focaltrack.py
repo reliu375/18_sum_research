@@ -768,7 +768,8 @@ class PulseCamProcessorTF(threading.Thread):
 		global ending_key
 		print('704 ending key')
 		t0 = time.time()
-		while True:
+		counter = 0
+		while counter < 1:
 			# time.sleep(1)
 			# self.camera_process()
 
@@ -1127,7 +1128,7 @@ class PulseCamProcessorTF(threading.Thread):
 			writer.close()
 			print('Graph done')
 			pdb.set_trace()
-			tf.train.write_graph(self.graph, '.', 'graph.pbtxt')
+			# tf.train.write_graph(self.graph, '.', 'graph.pbtxt')
 
 			# Under development
 
@@ -1373,6 +1374,11 @@ class PulseCamProcessorTF(threading.Thread):
 		
 		# print('run2')
 		self.results = self.session.run(res_dict)
+		tf.saved_model.simple_save(self.session, "saved_model.pbtxt", 
+				inputs={"I_in": self.input_dict[self.I_in],
+						"a1_in": self.input_dict[self.a1_in],
+						"offset_in": self.input_dict[self.offset_in]},
+				outputs={"res": res_dict})
 		
 		# self.results = []
 
@@ -3226,7 +3232,7 @@ def multithreading_test():
 	b = PulseCamProcessorTF(cfg[0:-1], cfgf)
 	
 	print('initialized TF processor')
-	# b.run()	
+	b.run()	
 	# pdb.set_trace()	
 	
 	'''
