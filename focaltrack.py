@@ -1386,10 +1386,10 @@ class PulseCamProcessorTF(threading.Thread):
 						"u_2": res_dict['u_2'],
 						"conf_non": res_dict['conf_non']})
 		'''
-		builder.add_meta_graph_and_variables(self.session,
-											 [tf.saved_model.tag_contants.SERVING],
-											 None, None)
-		builder.save()
+		self.builder.add_meta_graph_and_variables(self.session,
+											 	[tf.saved_model.tag_contants.SERVING],
+											 	None, None)
+		self.builder.save()
 		# self.results = []
 
 		# if self.robust_mode == 'tracker':
