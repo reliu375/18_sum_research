@@ -758,7 +758,7 @@ class PulseCamProcessorTF(threading.Thread):
 		self.d_input = 0
 		self.d_output = 0
 
-		self.builder = tf.saved_model.builder.SavedModelBuilder('.')
+		self.builder = tf.saved_model.builder.SavedModelBuilder('./models/')
 		# make a video recorder
 		self.build_graph()
 		print("build graph")
