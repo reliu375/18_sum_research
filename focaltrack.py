@@ -1366,11 +1366,13 @@ class PulseCamProcessorTF(threading.Thread):
 		self.input_dict[self.a1_in] = self.cfg[0]['a1']
 		self.input_dict[self.offset_in] = self.offset
 
-		
+		pdb.set_trace()
 		cuda.memcpy_htod_async(self.d_input, self.input_dict[self.I_in], self.stream)
 		cuda.memcpy_htod_async(self.d_input, self.input_dict[self.a1_in], self.stream)
 		cuda.memcpy_htod_async(self.d_input, self.input_dict[self.offset_in], self.stream)
+		pdb.set_trace()
 		self.context.enqueue(1, self.bindings, self.stream.handle, None)
+		pdb.set_trace()
 		cuda.memcpy_dtoh_async(self.results, self.d_output, self.stream)
 		self.stream.synchronize()
 		
