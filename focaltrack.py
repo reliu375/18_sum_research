@@ -23,9 +23,9 @@ import time
 from scipy import interpolate
 import numpy.matlib
 
+import uff
 import tensorrt as trt
 from tensorrt.parsers import uffparser
-import uff
 import pycuda.driver as cuda
 import pycuda.autoinit
 
