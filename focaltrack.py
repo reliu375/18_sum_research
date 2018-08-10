@@ -23,7 +23,6 @@ import time
 from scipy import interpolate
 import numpy.matlib
 
-import uff
 import tensorrt as trt
 from tensorrt.parsers import uffparser
 import pycuda.driver as cuda
@@ -34,6 +33,7 @@ import pycuda.autoinit
 
 #debugging
 import pdb
+import uff
 
 #multithreading
 import threading
