@@ -49,7 +49,7 @@ robust_mode = 'scanner_starter'
 image_result = [0,0]
 camera_resolution = (600,960,)
 output_node_name = ["Reshape_6", "truediv_59", "strided_slice_32", "Reshape_8", "strided_slice_33"]
-output_node_name_temp = ["Sum"]
+output_node_name_temp = ["add_2"]
 
 #the range for different outputs, range set to NaN means auto-ranging
 DEPTH_RANGE = [-1.0,-0.3]#[-1.0,-0.3] # -1.0,-0.5
@@ -868,34 +868,35 @@ class PulseCamProcessorTF(threading.Thread):
 			
 			for i in range(len(ppx)):
 				o = []
-				for k in range(len(ppx[0])):
+				for k in range(len(ppx[i])):
 					o.append(1)
 					for l in range(len(o)-1):
 						o[l] = o[l] * (offset/10000)	
 				o = tf.stack(o,0)
 				# pdb.set_trace()
-				temp = tf.constant(np.flipud(ppx[0]),dtype=tf.float32)
+				temp = tf.constant(np.flipud(ppx[i]),dtype=tf.float32)
 				sth = tf.reduce_sum(temp*o)
 				px.append(sth)
 			
-			# pdb.set_trace()
-			# for i in range(len(ppx)):
-			# 	o = tf.stack([(offset/10000)**k for k in range(len(ppx[i]))],0)
-			# 	temp = tf.constant(np.flipud(ppx[i]),dtype=tf.float32)
-			# 	px.append(tf.reduce_sum(temp * o))
+			for i in range(len(ppy)):
+				o = []
+				for k in range(len(ppy[i])):
+					o.append(1)
+					for l in range(len(o)-1):
+						o[l] = o[l] * (offset/10000)
+				o = tf.stack(o,0)
 
-			# for i in range(len(ppy)):
-				# o = tf.stack([(offset/10000)**k for k in range(len(ppy[i]))],0)
-				# py.append(tf.reduce_sum(np.flipud(ppy[i]) * o))
+				temp = tf.constant(np.flipud(ppy[i]), dtype=tf.float32)
+				sth = tf.reduce_sum(temp*o)
+				py.append(sth)
 			
 			# radial distortion
-			# xx,yy = np.meshgrid(\
-			# 	np.arange(self.resolution[0][1]),
-			# 	np.arange(self.resolution[0][0])
-			# )
-			
+			xx,yy = np.meshgrid(\
+				np.arange(self.resolution[0][1]),
+				np.arange(self.resolution[0][0])
+			)
 
-			'''
+			
 			xx = (xx - (self.resolution[0][1]-1)/2)
 			yy = (yy - (self.resolution[0][0]-1)/2)
 
@@ -905,8 +906,9 @@ class PulseCamProcessorTF(threading.Thread):
 			yr = tf.reduce_sum(tf.stack(yr,0),0)
 
 			zr = xr * yr
+			pdb.set_trace()
 			
-			
+			# TODO: Work on pxd definition, need to use iterative loops.
 			# radially confidence attenuation
 			pxd = tf.stack([px[k]*(len(px)-1-k) for k in range(len(px)-1)],-1)
 			rxs = tf.py_func(np.roots, [pxd], tf.float32)
@@ -916,7 +918,8 @@ class PulseCamProcessorTF(threading.Thread):
 			confrr = tf.sqrt(xxr**2+yyr**2)-1
 			confrr = tf.nn.relu(confrr)
 			confr = 0.998 + 0.002/(1+10*confrr)
-
+			pdb.set_trace()
+			'''
 			I_batch = []
 			I_lap_batch = []
 
@@ -1145,13 +1148,15 @@ class PulseCamProcessorTF(threading.Thread):
 
 			# print(self.graph)
 			self.graph = tf.get_default_graph().as_graph_def()
+			
+			print('Graph done')
+			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name_temp)
 			writer = tf.summary.FileWriter('.')
 			writer.add_graph(self.graph)
 			writer.close()
-			print('Graph done')
-			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name_temp)
-
 			self.graph = tf.graph_util.remove_training_nodes(self.graph)
+
+
 			
 			# print(self.graph)
 			# pdb.set_trace()
