@@ -708,7 +708,7 @@ class PulseCamProcessorTF(threading.Thread):
 		print("offset: ", self.offset)
 
 		self.ser = serial.Serial()
-		self.ser.port = "/dev/ttyUSB1" # may be called something different
+		self.ser.port = "/dev/ttyUSB0" # may be called something different
 		self.ser.baudrate = 9600 # may be different
 		self.ser.open()
 		# initialize the lens

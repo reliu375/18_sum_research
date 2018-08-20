@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # change permission of the ttyUSB0
-sudo chmod 777 /dev/ttyUSB1
+sudo chmod 777 /dev/ttyUSB0
 
 # initialize the lens
 python3.5 test_usb.py
