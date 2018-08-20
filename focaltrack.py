@@ -1130,7 +1130,7 @@ class PulseCamProcessorTF(threading.Thread):
 			self.graph = tf.graph_util.remove_training_nodes(self.graph)
 			
 			# print(self.graph)
-			# pdb.set_trace()
+			pdb.set_trace()
 			# tf.train.write_graph(self.graph, '.', 'graph.pbtxt')
 
 			# Under development
@@ -1139,6 +1139,7 @@ class PulseCamProcessorTF(threading.Thread):
 			
 			self.uff_model = uff.from_tensorflow(self.graph, output_node_name)
 
+			pdb.set_trace()
 			parser = uffparser.create_uff_parser()
 			# TODO: fill in the inputs/outputs
 			parser.register_input("Variable_1", (300, 480, 2), 0)
@@ -1149,7 +1150,7 @@ class PulseCamProcessorTF(threading.Thread):
 			parser.register_output("strided_slice_32")
 			parser.register_output("Reshape_8")
 			parser.register_output("strided_slice_33")
-
+			pdb.set_trace()
 			self.engine = trt.utils.uff_to_trt_engine(G_LOGGER, uff_model, parser, 1, 1 << 20)
 			parser.destroy()
 
