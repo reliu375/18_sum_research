@@ -27,7 +27,8 @@ def simple_conv(x,k, padding = 'SAME'):
 
 def simple_conv_batch(x,k, padding = 'SAME'):
 	x = tf.expand_dims(x,-1)
-	y = tf.nn.depthwise_conv2d(x,k,[1,1,1,1],padding=padding)
+	# pdb.set_trace()
+	y = tf.nn.conv2d(x,k,[1,1,1,1],padding=padding)
 	return y[:,:,:,0]
 	
 def dIdx(image, k = None):
@@ -45,7 +46,7 @@ def dIdy(image, k = None):
 	
 def dIdx_batch(image, k = None):
 	if k is None:
-		k = [[0.5, 0.0, -0.5]]
+		k = tf.Variable([[0.5, 0.0, -0.5]],dtype=tf.float32)
 	kernel = make_kernel(k)
 	return simple_conv_batch(image, kernel)
 

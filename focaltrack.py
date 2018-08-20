@@ -49,6 +49,7 @@ robust_mode = 'scanner_starter'
 image_result = [0,0]
 camera_resolution = (600,960,)
 output_node_name = ["Reshape_6", "truediv_59", "strided_slice_32", "Reshape_8", "strided_slice_33"]
+output_node_name_temp = ["Sum"]
 
 #the range for different outputs, range set to NaN means auto-ranging
 DEPTH_RANGE = [-1.0,-0.3]#[-1.0,-0.3] # -1.0,-0.5
@@ -758,7 +759,7 @@ class PulseCamProcessorTF(threading.Thread):
 		self.d_input = 0
 		self.d_output = 0
 
-		self.builder = tf.saved_model.builder.SavedModelBuilder('./models/')
+		#self.builder = tf.saved_model.builder.SavedModelBuilder('./models/')
 		# make a video recorder
 		self.build_graph()
 		print("build graph")
@@ -855,26 +856,46 @@ class PulseCamProcessorTF(threading.Thread):
 
 			self.offset_in = tf.Variable(1, dtype=tf.float32)
 			offset = tf.Variable(1, dtype=tf.float32)
-
+			
 			# quadratic correction
 			px = []
 			py = []
 			ppx = self.cfgf[0]['ppx']
 			ppy = self.cfgf[0]['ppy']
+			k = tf.constant(np.arange(len(ppx[0])),dtype=tf.float32)
+
+			# sth = np.stack([(offset/10000)**k for k in range(len(ppx[0]))],0)
+			
 			for i in range(len(ppx)):
-				o = tf.stack([(offset/10000)**k for k in range(len(ppx[i]))],0)
-				px.append(tf.reduce_sum(np.flipud(ppx[i]) * o))
+				o = []
+				for k in range(len(ppx[0])):
+					o.append(1)
+					for l in range(len(o)-1):
+						o[l] = o[l] * (offset/10000)	
+				o = tf.stack(o,0)
+				# pdb.set_trace()
+				temp = tf.constant(np.flipud(ppx[0]),dtype=tf.float32)
+				sth = tf.reduce_sum(temp*o)
+				px.append(sth)
+			
+			# pdb.set_trace()
+			# for i in range(len(ppx)):
+			# 	o = tf.stack([(offset/10000)**k for k in range(len(ppx[i]))],0)
+			# 	temp = tf.constant(np.flipud(ppx[i]),dtype=tf.float32)
+			# 	px.append(tf.reduce_sum(temp * o))
 
-			for i in range(len(ppy)):
-				o = tf.stack([(offset/10000)**k for k in range(len(ppy[i]))],0)
-				py.append(tf.reduce_sum(np.flipud(ppy[i]) * o))
-
+			# for i in range(len(ppy)):
+				# o = tf.stack([(offset/10000)**k for k in range(len(ppy[i]))],0)
+				# py.append(tf.reduce_sum(np.flipud(ppy[i]) * o))
+			
 			# radial distortion
-			xx,yy = np.meshgrid(\
-				np.arange(self.resolution[0][1]),
-				np.arange(self.resolution[0][0])
-			)
+			# xx,yy = np.meshgrid(\
+			# 	np.arange(self.resolution[0][1]),
+			# 	np.arange(self.resolution[0][0])
+			# )
+			
 
+			'''
 			xx = (xx - (self.resolution[0][1]-1)/2)
 			yy = (yy - (self.resolution[0][0]-1)/2)
 
@@ -884,6 +905,7 @@ class PulseCamProcessorTF(threading.Thread):
 			yr = tf.reduce_sum(tf.stack(yr,0),0)
 
 			zr = xr * yr
+			
 			
 			# radially confidence attenuation
 			pxd = tf.stack([px[k]*(len(px)-1-k) for k in range(len(px)-1)],-1)
@@ -985,6 +1007,8 @@ class PulseCamProcessorTF(threading.Thread):
 				# multi resolution
 				I_t.append(tmp_I[0,:,:])
 				tmp_I_blur = dIdx_batch(tmp_I, gauss[i])
+				# pdb.set_trace()
+				
 				I_lap.append(tmp_I[1,:,:] - tmp_I_blur[1,:,:])
 
 				if i < len(self.cfg)-1:
@@ -1084,9 +1108,8 @@ class PulseCamProcessorTF(threading.Thread):
 					self.resolution[0]+(-1,)
 				)
 
-			pdb.set_trace()
-
-			# 
+			# pdb.set_trace()
+			 
 			self.valid_windowed_region_fuse()
 
 			# remove the bias
@@ -1098,6 +1121,7 @@ class PulseCamProcessorTF(threading.Thread):
 				self.vars_fuse[key] = -self.vars_fuse[key]
 				self.vars_align[key] = -self.vars_align[key]
 
+			'''
 			# # temporal averaging
 			# conf_old = tf.Variable(self.vars_fuse['conf'], dtype=tf.float32)
 			# l = 0.91
@@ -1113,7 +1137,7 @@ class PulseCamProcessorTF(threading.Thread):
 			self.input_data = tf.group(\
 				I.assign(self.I_in), a1.assign(self.a1_in), offset.assign(self.offset_in)
 			)
-
+			
 			#do not add anything to the compute graph 
 			#after this line
 			init_op = tf.global_variables_initializer()
@@ -1125,24 +1149,24 @@ class PulseCamProcessorTF(threading.Thread):
 			writer.add_graph(self.graph)
 			writer.close()
 			print('Graph done')
-			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name)
+			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name_temp)
 
 			self.graph = tf.graph_util.remove_training_nodes(self.graph)
 			
 			# print(self.graph)
-			pdb.set_trace()
+			# pdb.set_trace()
 			# tf.train.write_graph(self.graph, '.', 'graph.pbtxt')
 
 			# Under development
 
 
 			
-			self.uff_model = uff.from_tensorflow(self.graph, output_node_name)
+			self.uff_model = uff.from_tensorflow(self.graph, output_node_name_temp)
 
-			pdb.set_trace()
 			parser = uffparser.create_uff_parser()
 			# TODO: fill in the inputs/outputs
 			parser.register_input("Variable_1", (300, 480, 2), 0)
+			pdb.set_trace()
 			parser.register_input("Variable_3", (), 0)
 			parser.register_input("Variable_5", (), 0)
 			parser.register_output("Reshape_6")
@@ -1150,20 +1174,19 @@ class PulseCamProcessorTF(threading.Thread):
 			parser.register_output("strided_slice_32")
 			parser.register_output("Reshape_8")
 			parser.register_output("strided_slice_33")
-			pdb.set_trace()
-			self.engine = trt.utils.uff_to_trt_engine(G_LOGGER, uff_model, parser, 1, 1 << 20)
+
+			self.engine = trt.utils.uff_to_trt_engine(self.G_LOGGER, self.uff_model, parser, 1, 1 << 20)
 			parser.destroy()
 
-			self.runtime = trt.infer.create_infer_runtime(G_LOGGER)
+			self.runtime = trt.infer.create_infer_runtime(self.G_LOGGER)
 			self.context = engine.create_execution_context()
-
 			self.stream = cuda.Stream()
 
 			self.d_input - cuda.mem_alloc(1 * self.cache.nbytes + 1000)
 			self.d_output = cuda.mem_alloc(5 * self.cache.nbytes + 1000)
 
-			self.bindings.append(int(d_input))
-			self.bindings.append(int(d_output))
+			self.bindings.append(int(self.d_input))
+			self.bindings.append(int(self.d_output))
 			for key in range(['Z','Zf','conf','u_2','conf_non']):
 				self.results[key] = 0
 
