@@ -48,8 +48,7 @@ ending_key = 'c'
 robust_mode = 'scanner_starter'
 image_result = [0,0]
 camera_resolution = (600,960,)
-output_node_name = ["Reshape_6", "truediv_59", "strided_slice_32", "Reshape_8", "strided_slice_33"]
-output_node_name_temp = ["add_2"]
+output_node_name = ["mul_163", "mul_165", "strided_slice_37", "Reshape_8", "strided_slice_39"]
 
 #the range for different outputs, range set to NaN means auto-ranging
 DEPTH_RANGE = [-1.0,-0.3]#[-1.0,-0.3] # -1.0,-0.5
@@ -708,16 +707,16 @@ class PulseCamProcessorTF(threading.Thread):
 			self.offset = self.offset_range[1]
 		print("offset: ", self.offset)
 
-		self.ser = serial.Serial()
-		self.ser.port = "/dev/ttyUSB0" # may be called something different
-		self.ser.baudrate = 9600 # may be different
-		self.ser.open()
-		# initialize the lens
-		if self.ser.isOpen():
-			string = "OF"+str(self.offset)+";"
-			self.ser.write(string.encode())
-			response = self.ser.read(self.ser.inWaiting())
-			print(response)
+		# self.ser = serial.Serial()
+		# self.ser.port = "/dev/ttyUSB0" # may be called something different
+		# self.ser.baudrate = 9600 # may be different
+		# self.ser.open()
+		# # initialize the lens
+		# if self.ser.isOpen():
+		# 	string = "OF"+str(self.offset)+";"
+		# 	self.ser.write(string.encode())
+		# 	response = self.ser.read(self.ser.inWaiting())
+		# 	print(response)
 
 		# we initialize with the tracking method to be passive
 		self.track_methods = ['track_Z_pid']
@@ -906,20 +905,26 @@ class PulseCamProcessorTF(threading.Thread):
 			yr = tf.reduce_sum(tf.stack(yr,0),0)
 
 			zr = xr * yr
-			pdb.set_trace()
 			
 			# TODO: Work on pxd definition, need to use iterative loops.
 			# radially confidence attenuation
-			pxd = tf.stack([px[k]*(len(px)-1-k) for k in range(len(px)-1)],-1)
+			pxd = []
+			for k in range(len(px)-1):
+				new_element = [px[k] * (len(px) - 1 - k)]	
+				pxd = tf.stack(new_element, -1)
+			
+			# pxd = tf.stack([px[k]*(len(px)-1-k) for k in range(len(px)-1)],-1)
 			rxs = tf.py_func(np.roots, [pxd], tf.float32)
 			xxr = xx/tf.abs(rxs[0])
 			yyr = yy/tf.abs(rxs[0])
 			# confr = 0.9985 + 0.0015/(1+tf.exp((tf.sqrt(xxr**2+yyr**2)-1)))
-			confrr = tf.sqrt(xxr**2+yyr**2)-1
+			xxr_sq = xxr * xxr
+			yyr_sq = yyr * yyr
+			confrr = tf.sqrt(xxr_sq + yyr_sq) - 1
+			# confrr = tf.sqrt(xxr**2+yyr**2)-1
 			confrr = tf.nn.relu(confrr)
 			confr = 0.998 + 0.002/(1+10*confrr)
-			pdb.set_trace()
-			'''
+			
 			I_batch = []
 			I_lap_batch = []
 
@@ -958,7 +963,7 @@ class PulseCamProcessorTF(threading.Thread):
 				dIdt(I, self.cfg[0]['fave'])]
 			)
 			# tmp_I = tf.transpose(I, perm=[2,0,1])
-
+			
 			for i in range(len(self.cfg)):
 				# initialize variables				
 				"""Input parameters"""
@@ -967,7 +972,7 @@ class PulseCamProcessorTF(threading.Thread):
 				a0.append(a0a1[i]/a1)
 
 				Z_0f.append(tf.constant(self.cfgf[i]['Z_0'], dtype= tf.float32))
-
+				
 				# interpolate a0 and a1
 				a0f.append(tf.py_func(\
 					self.interp_a0, \
@@ -1060,6 +1065,7 @@ class PulseCamProcessorTF(threading.Thread):
 				self.vars[i]['u_3f']= u_3f[i]
 				self.vars[i]['u_4f']= u_4f[i]
 			
+			
 			# align depth and confidence maps
 			self.align_maps_ext(['u_2','u_2f','u_3','u_4','u_3f','u_4f'])
 
@@ -1070,7 +1076,7 @@ class PulseCamProcessorTF(threading.Thread):
 					[-1, len(self.cfg)*self.cfg[0]['ext_f'].shape[0]]
 				)
 
-			# pdb.set_trace()
+						
 			# compute the aligned version of Z
 			self.vars_align['Z'] = \
 				self.vars_align['u_3'] / (self.vars_align['u_4'] + 1e-5)
@@ -1079,20 +1085,22 @@ class PulseCamProcessorTF(threading.Thread):
 				self.vars_align['u_3f'] / (self.vars_align['u_4f']+ 1e-5)
 
 			# pdb.set_trace()
+			
 			# compute windowed and unwindowed confidence
 			eval('self.'+self.cfg[0]['conf_func']+'()')
 
 			# fusion
 			self.softmax_fusion()
-
-			# pdb.set_trace()
+			
 			# radial correction
+			# self.vars_fuse['Zf'] = self.vars_fuse['Zf'] / zr
 			self.vars_fuse['Zf'] /= zr
 			self.vars_align['conf_non'] = self.vars_align['conf']
 			self.vars_fuse['conf_non'] = self.vars_fuse['conf']
 			self.vars_fuse['conf'] *= confr
 			self.vars_fuse['conff'] *= confr
 
+			
 			# averaging the confidence to remove noise
 			conf_ave = tf.stack(\
 				[self.vars_fuse['conf'],self.vars_fuse['conf_non'], self.vars_fuse['conff']]
@@ -1103,34 +1111,33 @@ class PulseCamProcessorTF(threading.Thread):
 			self.vars_fuse['conf'] = conf_ave[0,:,:] #* flag
 			self.vars_fuse['conf_non'] = conf_ave[1,:,:] #* flag
 			self.vars_fuse['conff'] = conf_ave[2,:,:]
-
+			
 			# reshape back all the aligned version
 			for key in ['u_2','u_3','u_4','u_3f','u_4f','Z','Zf','conf','conf_non','conff']:
 				self.vars_align[key] = tf.reshape(\
 					self.vars_align[key],
 					self.resolution[0]+(-1,)
 				)
-
-			# pdb.set_trace()
-			 
+			
 			self.valid_windowed_region_fuse()
 
 			# remove the bias
 			for key in ['Z']:
-				self.vars_fuse[key] = -self.vars_fuse[key]
-				self.vars_align[key] = -self.vars_align[key]
+				self.vars_fuse[key] = self.vars_fuse[key] * (-1)
+				self.vars_align[key] = self.vars_align[key] * (-1)
 
 			for key in ['Zf']:
-				self.vars_fuse[key] = -self.vars_fuse[key]
-				self.vars_align[key] = -self.vars_align[key]
+				self.vars_fuse[key] = self.vars_fuse[key] * (-1)
+				self.vars_align[key] = self.vars_align[key] * (-1)
 
-			'''
+			pdb.set_trace()
 			# # temporal averaging
 			# conf_old = tf.Variable(self.vars_fuse['conf'], dtype=tf.float32)
 			# l = 0.91
 			# self.vars_fuse['conf'] = l*self.vars_fuse['conf']+(1-l)*conf_old
 			# conf_old = self.vars_fuse['conf']
-
+			
+			
 			#add values
 			#as number the inputs depends on num_py,
 			#we use string operations to do it
@@ -1150,7 +1157,7 @@ class PulseCamProcessorTF(threading.Thread):
 			self.graph = tf.get_default_graph().as_graph_def()
 			
 			print('Graph done')
-			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name_temp)
+			self.graph = tf.graph_util.convert_variables_to_constants(self.session, self.graph, output_node_name)
 			writer = tf.summary.FileWriter('.')
 			writer.add_graph(self.graph)
 			writer.close()
@@ -1166,19 +1173,20 @@ class PulseCamProcessorTF(threading.Thread):
 
 
 			
-			self.uff_model = uff.from_tensorflow(self.graph, output_node_name_temp)
+			self.uff_model = uff.from_tensorflow(self.graph, output_node_name)
 
 			parser = uffparser.create_uff_parser()
 			# TODO: fill in the inputs/outputs
 			parser.register_input("Variable_1", (300, 480, 2), 0)
 			pdb.set_trace()
-			parser.register_input("Variable_3", (), 0)
-			parser.register_input("Variable_5", (), 0)
-			parser.register_output("Reshape_6")
-			parser.register_output("truediv_59")
-			parser.register_output("strided_slice_32")
+			parser.register_input("Variable_3", (1, 1, 1), 0)
+			parser.register_input("Variable_5", (1, 1, 1), 0)
+			parser.register_output("mul_163")
+			parser.register_output("mul_165")
+			parser.register_output("strided_slice_37")
 			parser.register_output("Reshape_8")
-			parser.register_output("strided_slice_33")
+			parser.register_output("strided_slice_39")
+			pdb.set_trace()
 
 			self.engine = trt.utils.uff_to_trt_engine(self.G_LOGGER, self.uff_model, parser, 1, 1 << 20)
 			parser.destroy()
@@ -1223,8 +1231,10 @@ class PulseCamProcessorTF(threading.Thread):
 		return 
 
 	def softmax_fusion(self):
-		ws = tf.nn.softmax(self.vars_align['conf']*1e10)
-
+		# amplify = self.vars_align['conf']
+		
+		ws = tf.nn.softmax(self.vars_align['conf'] * 1e10)
+		
 		# fuse the results using softmax
 		for var in self.vars_to_fuse:
 			self.vars_fuse[var] = \
@@ -1251,7 +1261,7 @@ class PulseCamProcessorTF(threading.Thread):
 				)
 
 		return 
-
+		
 	def w3_baseline_conf(self):
 		# this function computes the confidence and 
 		# uncertainty according to stability,
@@ -1288,16 +1298,16 @@ class PulseCamProcessorTF(threading.Thread):
 		w_bc2 = tf.concat(w_bc2,0)
 
 		u_3 = self.vars_align['u_3']
-		u_32 = u_3**2
+		u_32 = u_3 * u_3
 		u_4 = self.vars_align['u_4']
-		u_42 = u_4**2
+		u_42 = u_4 * u_4
 
 		self.vars_align['conf'] = (u_42 + 1e-20)/\
 			tf.sqrt(\
 				tf.multiply(u_32, w_bc) + \
 				tf.multiply(u_42, w_bc1) + \
 				tf.multiply(u_3*u_4, w_bc2) + \
-				u_42**2 + 1e-10				 
+				u_42 * u_42 + 1e-10				 
 			)
 
 		self.vars_align['conff'] = self.vars_align['conf']
@@ -1420,28 +1430,10 @@ class PulseCamProcessorTF(threading.Thread):
 
 		# print('run2')
 
-		'''
-		self.results = self.session.run(res_dict)
-		tf.saved_model.simple_save(self.session, "saved_model.pbtxt", 
-				inputs={"I_in": self.input_dict[self.I_in],
-						"a1_in": self.input_dict[self.a1_in],
-						"offset_in": self.input_dict[self.offset_in]},
-				outputs={"Z": res_dict['Z'],
-						"Zf": res_dict['Zf'],
-						"conf": res_dict['conf'],
-						"u_2": res_dict['u_2'],
-						"conf_non": res_dict['conf_non']})
-		
-		self.builder.add_meta_graph_and_variables(self.session,
-											 	[tf.saved_model.tag_constants.SERVING],
-											 	None, None)
-		self.builder.save()
-		# self.results = []
-
 		# if self.robust_mode == 'tracker':
 		# 	# keep the correct sequence
 		# 	self.keep_sequence()
-		'''
+		
 		# print('swap')
 		self.swap_frames()		
 		
@@ -1956,7 +1948,7 @@ class PulseCamProcessorTF(threading.Thread):
 		self.max_frame = self.frames
 		self.scanner_step = 0.01
 
-		self.control_lens()
+		# self.control_lens()
 		self.robust_mode = 'scanner_iter'
 		return
 
@@ -1979,7 +1971,7 @@ class PulseCamProcessorTF(threading.Thread):
 			# if we already find the frame with max high conf pixels
 			self.offset = self.max_offset 
 			self.cfg[0]['a1'] = self.offset_to_a1(self.offset)
-			self.control_lens()
+			# self.control_lens()
 
 			self.robust_mode = 'tracker_starter'
 		else:
@@ -2010,7 +2002,7 @@ class PulseCamProcessorTF(threading.Thread):
 			# print(self.offset)
 			# print('scanning')
 
-			self.control_lens()
+			# self.control_lens()
 
 		return
 
@@ -2093,7 +2085,7 @@ class PulseCamProcessorTF(threading.Thread):
 		self.cfg[0]['a1'] = self.offset_to_a1(self.offset)
 		self.cfgf[0]['a1'] = self.offset_to_a1_f(self.offset)
 		# print(Z_set, self.offset, self.Z_tgt)
-		self.control_lens()
+		# self.control_lens()
 		return 
 
 	def offset_to_a1(self, offset):
@@ -2110,13 +2102,13 @@ class PulseCamProcessorTF(threading.Thread):
 	def a1_to_offset_f(self, a1):
 		return int(interpolate.splev(a1, self.cfgf[0]['of_rtck']))
 
-	def control_lens(self):
-		if self.ser.isOpen():
-			string = "OF"+str(self.offset)+";"
-			self.ser.write(string.encode())
-			response = self.ser.read(self.ser.inWaiting())
-			# print(response)
-		return
+	# def control_lens(self):
+	# 	if self.ser.isOpen():
+	# 		string = "OF"+str(self.offset)+";"
+	# 		self.ser.write(string.encode())
+	# 		response = self.ser.read(self.ser.inWaiting())
+	# 		# print(response)
+	# 	return
 
 		"""computes the average FPS over the last __FPS_WINDOW frames"""
 
